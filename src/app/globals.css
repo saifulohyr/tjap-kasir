@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+/*
+ * ═══════════════════════════════════════════════
+ *  TJAP CHACOH — Heritage Design System
+ *  "Sejak Kemarin Sore"
+ * ═══════════════════════════════════════════════
+ */
+
+@theme {
+  /* ── Primary Palette ── */
+  --color-primary: #8B0000;
+  --color-primary-dark: #610000;
+  --color-primary-container: #FFD4D0;
+  --color-primary-hover: #A00000;
+  --color-on-primary: #FFFFFF;
+  --color-on-primary-container: #410000;
+
+  /* ── Secondary Palette (Espresso Brown) ── */
+  --color-secondary: #3E2723;
+  --color-secondary-light: #5B403C;
+  --color-secondary-container: #FED7D0;
+  --color-on-secondary: #FFFFFF;
+  --color-on-secondary-container: #795c57;
+
+  /* ── Tertiary Palette (Deep Brown) ── */
+  --color-tertiary: #3B290C;
+  --color-tertiary-light: #584324;
+  --color-tertiary-container: #543F20;
+  --color-on-tertiary: #FFFFFF;
+
+  /* ── Surface / Background ── */
+  --color-surface: #FFF8EF;
+  --color-surface-dim: #E1D9CB;
+  --color-surface-bright: #FFF8EF;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-low: #FBF3E4;
+  --color-surface-container: #F5EDDE;
+  --color-surface-container-high: #EFE7D9;
+  --color-surface-container-highest: #E9E2D3;
+  --color-background: #FDF5E6;
+  --color-on-surface: #1E1B13;
+  --color-on-surface-variant: #5A403C;
+  --color-inverse-surface: #343026;
+  --color-inverse-on-surface: #F8F0E1;
+
+  /* ── Accent / Border ── */
+  --color-accent: #D2B48C;
+  --color-outline: #8E706B;
+  --color-outline-variant: #E3BEB8;
+
+  /* ── Error ── */
+  --color-error: #BA1A1A;
+  --color-error-container: #FFDAD6;
+  --color-on-error: #FFFFFF;
+
+  /* ── Font Families ── */
+  --font-serif-display: var(--font-playfair), "Playfair Display", serif;
+  --font-headline: var(--font-newsreader), "Newsreader", serif;
+  --font-body: var(--font-inter), "Inter", sans-serif;
+  --font-label: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+
+  /* ── Border Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 32px 64px rgba(62, 39, 35, 0.08);
+  --shadow-button: 0 4px 12px rgba(139, 0, 0, 0.2);
+  --shadow-elevated: 0 8px 32px rgba(62, 39, 35, 0.12);
+
+  /* ── Animations ── */
+  --animate-dot-in: dot-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  --animate-shake: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+  --animate-fade-in: fade-in 0.6s ease-out forwards;
+  --animate-slide-up: slide-up 0.5s ease-out forwards;
+  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
+  --animate-press: press 0.15s ease-out forwards;
+
+  @keyframes dot-in {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+    20%, 40%, 60%, 80% { transform: translateX(6px); }
+  }
+
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes slide-up {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  @keyframes press {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+}
+
+/* ── Base Styles ── */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+}
+
+::selection {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+/* ── Vintage Noise Texture Overlay ── */
+.vintage-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── Top Gradient Bar ── */
+.heritage-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    var(--color-primary),
+    var(--color-primary-container),
+    var(--color-primary)
+  );
+  z-index: 50;
+}
+
+/* ── Custom Utilities ── */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: var(--color-surface-container-low); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: 10px; }
+
+.order-card-gradient { background: linear-gradient(135deg, #ffffff 0%, var(--color-surface-container-low) 100%); }
+
+.varnish-cta { background: linear-gradient(135deg, #610000 0%, #8b0000 100%); }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Thermal Print Styling ── */
+@media print {
+  @page {
+    margin: 0;
+    size: 58mm auto; /* Custom width for 58mm thermal rolls */
+  }
+
+  /* Hide EVERYTHING on the page */
+  html, body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 10px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide all direct children of body EXCEPT the receipt */
+  body > *:not(.receipt-print-area) {
+    display: none !important;
+  }
+
+  .receipt-print-area {
+    display: block !important;
+    position: relative !important;
+    width: 58mm !important;
+    margin: 0 auto !important;
+    padding: 2mm !important;
+    box-sizing: border-box !important;
+    background: white !important;
+    color: black !important;
+    page-break-after: auto;
+  }
+
+  /* Ensure receipt logo prints */
+  .receipt-print-area .receipt-logo {
+    visibility: visible !important;
+    filter: grayscale(1) !important;
+  }
+}
