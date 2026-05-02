@@ -59,13 +59,16 @@ export default function Sidebar() {
 
       {/* Bottom Actions */}
       <div className="px-2 xl:px-4 mt-auto">
-        <Link
-          href="/login"
-          className="flex items-center gap-3 px-3 xl:px-4 py-3 mt-4 text-[#3b290c] opacity-60 hover:opacity-100 hover:bg-[#fff8ef] rounded-lg transition-all group justify-center xl:justify-start"
+        <button
+          onClick={() => {
+            document.cookie = "tjap_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+            window.location.href = '/login'
+          }}
+          className="w-full flex items-center gap-3 px-3 xl:px-4 py-3 mt-4 text-[#3b290c] opacity-60 hover:opacity-100 hover:bg-[#fff8ef] rounded-lg transition-all group justify-center xl:justify-start"
         >
           <LogOut className="w-5 h-5 shrink-0 group-hover:text-primary transition-colors" />
           <span className="font-mono text-xs uppercase tracking-wider group-hover:text-primary transition-colors hidden xl:inline">Logout</span>
-        </Link>
+        </button>
       </div>
     </aside>
   )

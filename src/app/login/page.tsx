@@ -54,6 +54,8 @@ export default function LoginPage() {
     await new Promise((resolve) => setTimeout(resolve, 600))
 
     if (pin === VALID_PIN) {
+      // Set session cookie for 1 day
+      document.cookie = "tjap_auth=true; path=/; max-age=86400; SameSite=Lax"
       router.push('/')
     } else {
       setShake(true)
