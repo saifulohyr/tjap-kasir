@@ -10,6 +10,8 @@ export interface ReceiptData {
   changeDue: number
   date: string
   cashierName: string
+  paymentMethod?: string
+  orderType: string
 }
 
 interface PrintReceiptProps {
@@ -86,6 +88,10 @@ export default function PrintReceipt({ data }: PrintReceiptProps) {
           <span>Kasir:</span>
           <span>{data.cashierName}</span>
         </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>Pesanan:</span>
+          <span style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{data.orderType}</span>
+        </div>
       </div>
 
       {/* ── Items ── */}
@@ -103,18 +109,28 @@ export default function PrintReceipt({ data }: PrintReceiptProps) {
 
       {/* ── Totals ── */}
       <div style={{ borderTop: '1px dashed #000', paddingTop: '4px', fontSize: '10px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '11px', marginTop: '2px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontWeight: 'bold' }}>
           <span>TOTAL</span>
           <span>{fmt(data.total)}</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-          <span>TUNAI</span>
-          <span>{fmt(data.cashReceived)}</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
-          <span>KEMBALI</span>
-          <span>{fmt(data.changeDue)}</span>
-        </div>
+        
+        {data.paymentMethod === 'QRIS' ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+            <span>METODE</span>
+            <span>QRIS</span>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+              <span>TUNAI</span>
+              <span>{fmt(data.cashReceived)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+              <span>KEMBALI</span>
+              <span>{fmt(data.changeDue)}</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Footer ── */}

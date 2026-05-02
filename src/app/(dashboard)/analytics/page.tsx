@@ -22,6 +22,8 @@ interface RecentTxn {
 
 export default function AnalyticsPage() {
   const [revenue, setRevenue] = useState(0)
+  const [revenueCash, setRevenueCash] = useState(0)
+  const [revenueQris, setRevenueQris] = useState(0)
   const [txnCnt, setTxnCnt] = useState(0)
   const [bestSeller, setBestSeller] = useState({ title: 'No Data', category: '-', qty: 0})
   const [recentTxns, setRecentTxns] = useState<RecentTxn[]>([])
@@ -64,10 +66,12 @@ export default function AnalyticsPage() {
         if (txns) {
           setTxnCnt(txns.length)
           setRevenue(txns.reduce((sum, t) => sum + Number(t.total_amount), 0))
+          setRevenueCash(txns.filter(t => t.payment_method === 'Cash').reduce((sum, t) => sum + Number(t.total_amount), 0))
+          setRevenueQris(txns.filter(t => t.payment_method === 'QRIS').reduce((sum, t) => sum + Number(t.total_amount), 0))
           setRecentTxns(txns.slice(0, 5).map((t, idx) => ({
             id: t.id,
             ticket_number: t.ticket_number,
-            type: idx % 2 === 0 ? 'Dine In' : 'Takeaway Order', // Fallback labeling
+            type: t.order_type, // Using actual data from DB
             amount: Number(t.total_amount)
           })))
         }
@@ -131,6 +135,16 @@ export default function AnalyticsPage() {
           <div className="flex items-baseline gap-2">
             <span className="font-mono text-xl lg:text-3xl font-bold text-primary">IDR</span>
             <h3 className="font-mono text-3xl lg:text-4xl font-bold text-on-surface">{revenue.toLocaleString('id-ID')}</h3>
+          </div>
+          <div className="mt-4 flex gap-4 text-[10px] font-mono tracking-wider font-bold">
+            <div className="flex flex-col">
+              <span className="text-secondary opacity-80 uppercase">Tunai</span>
+              <span className="text-on-surface">Rp {revenueCash.toLocaleString('id-ID')}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-secondary opacity-80 uppercase">QRIS</span>
+              <span className="text-on-surface">Rp {revenueQris.toLocaleString('id-ID')}</span>
+            </div>
           </div>
           <div className="mt-6 flex items-center gap-2 text-[#2d5a27]">
             <TrendingUp className="w-4 h-4" />

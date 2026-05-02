@@ -1,6 +1,6 @@
 'use client'
 
-import { Banknote, X, Delete, CheckCircle2, Loader2, Printer } from 'lucide-react'
+import { Banknote, X, Delete, CheckCircle2, Loader2, Printer, QrCode } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useCartStore } from '@/store/useCartStore'
 import { supabase } from '@/lib/supabase'
@@ -20,6 +20,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [cashierName, setCashierName] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'QRIS'>('Cash')
   const [lastReceipt, setLastReceipt] = useState<ReceiptData | null>(null)
 
   const { isConnected, isConnecting, error: btError, connect, print } = useBluetoothPrinter()
@@ -35,12 +36,23 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
       setIsSuccess(false)
       setChangeDueSnapshot(0)
       setCashierName('')
+      setPaymentMethod('Cash')
     }
   }, [isOpen])
+
+  // Automatically adjust cash received when payment method changes
+  useEffect(() => {
+    if (paymentMethod === 'QRIS') {
+      setCashReceivedStr(total.toString())
+    } else if (isOpen) {
+      setCashReceivedStr(total.toString())
+    }
+  }, [paymentMethod, total, isOpen])
 
   if (!isOpen) return null
 
   const handleNumpad = (num: string | number) => {
+    if (paymentMethod === 'QRIS') return
     setCashReceivedStr(prev => {
       if (prev === '0') return num.toString()
       return prev + num.toString()
@@ -48,6 +60,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
   }
   
   const handleDelete = () => {
+    if (paymentMethod === 'QRIS') return
     setCashReceivedStr(prev => {
       if (prev.length <= 1) return '0'
       return prev.slice(0, -1)
@@ -70,7 +83,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
       const { data: txn, error } = await supabase.from('transactions').insert({
         ticket_number: ticketNumber,
         total_amount: total,
-        payment_method: 'Cash',
+        payment_method: paymentMethod,
         status: 'Completed',
         order_type: orderType
       }).select().single()
@@ -107,7 +120,9 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
         cashReceived,
         changeDue,
         date: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
-        cashierName: cashierName || 'Shift Active'
+        cashierName: cashierName || 'Shift Active',
+        paymentMethod,
+        orderType
       }
 
       // Send receipt data to parent (page level) BEFORE clearing cart
@@ -195,9 +210,27 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
                 <p className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-on-surface-variant font-bold">Select Transaction Type</p>
               </div>
               <nav className="flex flex-col gap-3 md:gap-4">
-                <button className="flex items-center gap-4 p-3 md:p-4 rounded-lg bg-surface-container-lowest text-primary border-2 border-primary/20 transition-all duration-300 shadow-sm">
+                <button 
+                  onClick={() => setPaymentMethod('Cash')}
+                  className={`flex items-center gap-4 p-3 md:p-4 rounded-lg border-2 transition-all duration-300 shadow-sm ${
+                    paymentMethod === 'Cash' 
+                      ? 'bg-surface-container-lowest text-primary border-primary/20' 
+                      : 'bg-transparent text-on-surface-variant border-transparent hover:bg-surface-container-low'
+                  }`}
+                >
                   <Banknote className="w-6 h-6 md:w-7 md:h-7" />
-                  <span className="font-serif italic text-lg md:text-xl font-bold">Cash</span>
+                  <span className="font-serif italic text-lg md:text-xl font-bold">Tunai</span>
+                </button>
+                <button 
+                  onClick={() => setPaymentMethod('QRIS')}
+                  className={`flex items-center gap-4 p-3 md:p-4 rounded-lg border-2 transition-all duration-300 shadow-sm ${
+                    paymentMethod === 'QRIS' 
+                      ? 'bg-surface-container-lowest text-primary border-primary/20' 
+                      : 'bg-transparent text-on-surface-variant border-transparent hover:bg-surface-container-low'
+                  }`}
+                >
+                  <QrCode className="w-6 h-6 md:w-7 md:h-7" />
+                  <span className="font-serif italic text-lg md:text-xl font-bold">QRIS</span>
                 </button>
               </nav>
             </aside>
@@ -229,7 +262,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className={`grid grid-cols-3 gap-2 transition-opacity duration-300 ${paymentMethod === 'QRIS' ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, '00', 0].map((num) => (
                       <button 
                         key={num} 

@@ -1,6 +1,6 @@
 'use client'
 
-import { Printer, Loader2, Search, Trash2, FolderOpen, ShoppingCart, X } from 'lucide-react'
+import { Loader2, Search, Trash2, FolderOpen, ShoppingCart, X } from 'lucide-react'
 import ProductCard from '@/components/pos/ProductCard'
 import CartItem from '@/components/pos/CartItem'
 import PaymentModal from '@/components/pos/PaymentModal'
@@ -246,19 +246,7 @@ export default function PosPage() {
                 >
                   Save Draft
                 </button>
-                <button 
-                  onClick={() => {
-                    if (lastReceiptData) {
-                      setTimeout(() => window.print(), 100)
-                    } else {
-                      alert('Belum ada struk untuk dicetak. Selesaikan pembayaran terlebih dahulu.')
-                    }
-                  }}
-                  className={`px-3 border border-outline-variant rounded-lg text-tertiary hover:bg-black/5 transition-colors flex items-center justify-center cursor-pointer active:scale-95 ${!lastReceiptData ? 'opacity-40 cursor-not-allowed' : ''}`}
-                  title="Print Thermal Receipt"
-                >
-                  <Printer className="w-4 h-4 md:w-5 md:h-5" />
-                </button>
+
               </div>
               <button 
                 onClick={() => {

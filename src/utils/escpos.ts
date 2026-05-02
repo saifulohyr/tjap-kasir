@@ -123,7 +123,8 @@ export const generateEscPosReceipt = (data: ReceiptData, storeName: string, addr
   // Meta details
   addLine(`TX ID:  ${data.ticketNumber}`)
   addLine(`Waktu:  ${data.date}`)
-  addLine(`Kasir:  ${data.cashierName}`)
+  addLine(`Kasir:   ${data.cashierName}`)
+  addLine(`Pesanan: ${data.orderType.toUpperCase()}`)
   addLine('-'.repeat(32))
   
   // Items
@@ -150,15 +151,22 @@ export const generateEscPosReceipt = (data: ReceiptData, storeName: string, addr
   
   add([ESC, 0x45, 0x00]) // Bold off
   
-  const cashLabel = "TUNAI"
-  const cashValue = `Rp ${data.cashReceived.toLocaleString('id-ID')}`
-  const cashPadding = 32 - cashLabel.length - cashValue.length
-  addLine(`${cashLabel}${' '.repeat(Math.max(0, cashPadding))}${cashValue}`)
-  
-  const changeLabel = "KEMBALI"
-  const changeValue = `Rp ${data.changeDue.toLocaleString('id-ID')}`
-  const changePadding = 32 - changeLabel.length - changeValue.length
-  addLine(`${changeLabel}${' '.repeat(Math.max(0, changePadding))}${changeValue}`)
+  if (data.paymentMethod === 'QRIS') {
+    const qrisLabel = "METODE"
+    const qrisValue = "QRIS"
+    const qrisPadding = 32 - qrisLabel.length - qrisValue.length
+    addLine(`${qrisLabel}${' '.repeat(Math.max(0, qrisPadding))}${qrisValue}`)
+  } else {
+    const cashLabel = "TUNAI"
+    const cashValue = `Rp ${data.cashReceived.toLocaleString('id-ID')}`
+    const cashPadding = 32 - cashLabel.length - cashValue.length
+    addLine(`${cashLabel}${' '.repeat(Math.max(0, cashPadding))}${cashValue}`)
+    
+    const changeLabel = "KEMBALI"
+    const changeValue = `Rp ${data.changeDue.toLocaleString('id-ID')}`
+    const changePadding = 32 - changeLabel.length - changeValue.length
+    addLine(`${changeLabel}${' '.repeat(Math.max(0, changePadding))}${changeValue}`)
+  }
   
   addLine('-'.repeat(32))
   
