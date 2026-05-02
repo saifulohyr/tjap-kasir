@@ -15,7 +15,7 @@ export default function Sidebar() {
 
   const tabs = [
     { label: 'POS', href: '/pos', icon: MonitorCheck },
-    { label: 'Kitchen', href: '/', icon: Utensils },
+    { label: 'Kitchen', href: '/kitchen', icon: Utensils },
     { label: 'Inventory', href: '/inventory', icon: Package },
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
   ]

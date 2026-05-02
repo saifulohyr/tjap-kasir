@@ -5,14 +5,14 @@ export function middleware(request: NextRequest) {
   const authCookie = request.cookies.get('tjap_auth')
   const { pathname } = request.nextUrl
 
-  // 1. If no cookie and trying to access anything except login -> Redirect to login
-  if (!authCookie && pathname !== '/login') {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // 1. If no cookie and trying to access dashboard routes -> Redirect to root (Login)
+  if (!authCookie && pathname !== '/') {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // 2. If already logged in and trying to access login -> Redirect to dashboard
-  if (authCookie && pathname === '/login') {
-    return NextResponse.redirect(new URL('/', request.url))
+  // 2. If already logged in and trying to access root (Login) -> Redirect to POS
+  if (authCookie && pathname === '/') {
+    return NextResponse.redirect(new URL('/pos', request.url))
   }
 
   return NextResponse.next()

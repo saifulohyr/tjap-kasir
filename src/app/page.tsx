@@ -56,7 +56,7 @@ export default function LoginPage() {
     if (pin === VALID_PIN) {
       // Set session cookie for 1 day
       document.cookie = "tjap_auth=true; path=/; max-age=86400; SameSite=Lax"
-      router.push('/')
+      router.push('/pos')
     } else {
       setShake(true)
       setError('PIN salah. Silakan coba lagi.')
@@ -85,7 +85,7 @@ export default function LoginPage() {
 
   return (
     <main
-      className="min-h-screen flex flex-col items-center justify-center px-6 py-12 relative"
+      className="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 relative overflow-y-auto"
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
@@ -93,25 +93,25 @@ export default function LoginPage() {
       <div className="heritage-bar" />
 
       {/* ── Brand Header ── */}
-      <div className="mb-10 text-center animate-fade-in">
-        <h1 className="font-serif-display text-5xl md:text-6xl italic font-bold text-primary tracking-tight mb-2">
+      <div className="mb-6 md:mb-10 text-center animate-fade-in scale-90 md:scale-100">
+        <h1 className="font-serif-display text-4xl md:text-6xl italic font-bold text-primary tracking-tight mb-2">
           Tjap Chacoh
         </h1>
-        <p className="font-label text-sm uppercase tracking-[0.2em] text-tertiary/60">
+        <p className="font-label text-[10px] md:text-sm uppercase tracking-[0.2em] text-tertiary/60">
           Sejak Kemarin Sore
         </p>
       </div>
 
       {/* ── PIN Card ── */}
       <div
-        className={`w-full max-w-md bg-surface-container-low rounded-xl p-8 relative overflow-hidden border border-outline-variant/10 animate-slide-up ${
+        className={`w-full max-w-[360px] md:max-w-md bg-surface-container-low rounded-xl p-6 md:p-8 relative overflow-hidden border border-outline-variant/10 animate-slide-up ${
           shake ? 'animate-shake' : ''
         }`}
         style={{ boxShadow: 'var(--shadow-card)' }}
       >
         {/* Card Header */}
-        <div className="mb-8 text-center">
-          <h2 className="font-headline text-2xl text-tertiary mb-6">
+        <div className="mb-6 md:mb-8 text-center">
+          <h2 className="font-headline text-xl md:text-2xl text-tertiary mb-4 md:mb-6">
             Staff Access Required
           </h2>
 
@@ -141,7 +141,7 @@ export default function LoginPage() {
         </div>
 
         {/* ── Number Pad ── */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-2 md:gap-3 mb-2 md:mb-4">
           {NUMPAD_KEYS.map(({ digit, letters }) => (
             <NumpadButton
               key={digit}
@@ -185,7 +185,7 @@ export default function LoginPage() {
 
 
       {/* ── System Footer ── */}
-      <footer className="fixed bottom-8 w-full text-center">
+      <footer className="mt-8 mb-4 w-full text-center">
         <p className="font-mono text-[10px] text-tertiary/40 uppercase tracking-[0.2em]">
           System V. 4.02 // Registry ID: TJAP-CH-001
         </p>
