@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tjap Chacoh POS (Point of Sale)
 
-## Getting Started
+Sistem Kasir Modern yang dirancang khusus untuk kedai kopi **Tjap Chacoh**. Dibangun menggunakan **Next.js 14**, **Tailwind CSS**, dan **Supabase** untuk integrasi database real-time.
 
-First, run the development server:
+## 🚀 Fitur Utama
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Hardware Integration**: Cetak struk langsung ke *Thermal Bluetooth Printer* (ESC/POS) menggunakan Web Bluetooth API.
+- **Dine-in & Takeaway**: Alur pemesanan yang fleksibel dengan penanda status pada setiap struk.
+- **Multipayment**: Mendukung pembayaran Tunai (Cash) dan QRIS (Statik).
+- **Analytics Dashboard**: Pantau pendapatan harian, item terlaris, dan rincian metode pembayaran secara real-time.
+- **Draft Management**: Simpan pesanan pelanggan sebagai draft jika belum ingin langsung dibayar.
+- **Security**: Akses dashboard yang dilindungi oleh PIN Kasir.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend**: Next.js 14 (App Router), React, Lucide Icons, Framer Motion.
+- **State Management**: Zustand.
+- **Backend/Database**: Supabase (PostgreSQL).
+- **Styling**: Vanilla CSS & Tailwind CSS.
+- **Hardware Communication**: Web Bluetooth API + ESC/POS Command Generator.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📦 Instalasi & Pengembangan Lokal
 
-## Learn More
+1. Clone repositori:
+   ```bash
+   git clone https://github.com/saifulohyr/tjap-kasir.git
+   ```
+2. Instal dependensi:
+   ```bash
+   npm install
+   ```
+3. Setup Environment Variables: Buat file `.env.local` dan isi dengan kredensial Supabase Anda:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+4. Jalankan server pengembangan:
+   ```bash
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+## 📄 Struktur Proyek
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `src/app`: Halaman-halaman utama (POS, Analytics, Inventory, Login).
+- `src/components`: Komponen UI modular (PaymentModal, ProductCard, Sidebar, dll).
+- `src/utils`: Utilitas logika (ESC/POS Generator, date formatter).
+- `src/store`: State management menggunakan Zustand.
+- `src/hooks`: Custom hooks untuk integrasi hardware (Web Bluetooth).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🖨️ Panduan Cetak Bluetooth
 
-## Deploy on Vercel
+Pastikan Anda menggunakan browser yang mendukung **Web Bluetooth API** (Chrome/Edge versi stabil). 
+1. Klik tombol **"Connect Bluetooth Printer"** pada layar konfirmasi pembayaran.
+2. Pilih printer thermal Bluetooth dari daftar perangkat.
+3. Klik **"Cetak Struk"** untuk mencetak secara instan tanpa dialog browser.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+Dikembangkan oleh Tim Engineering Tjap Chacoh.

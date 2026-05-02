@@ -36,6 +36,8 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     const fetchAnalytics = async () => {
+      if (!selectedDate) return
+      setIsLoading(true)
       try {
         const start = new Date(selectedDate)
         start.setHours(0, 0, 0, 0)

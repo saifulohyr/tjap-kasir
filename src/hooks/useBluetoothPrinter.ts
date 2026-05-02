@@ -25,7 +25,7 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
   }, [])
 
   const connect = async () => {
-    if (typeof navigator === 'undefined' || !navigator.bluetooth) {
+    if (typeof navigator === 'undefined' || !(navigator as any).bluetooth) {
       setError('Web Bluetooth is not supported in this browser. Please use Chrome or Edge.')
       return
     }
