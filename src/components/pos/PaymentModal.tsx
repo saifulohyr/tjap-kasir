@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react'
 import { useCartStore } from '@/store/useCartStore'
 import { supabase } from '@/lib/supabase'
 import { ReceiptData } from './PrintReceipt'
+import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter'
+import { generateEscPosReceipt, convertImageToEscPos } from '@/utils/escpos'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -17,13 +19,10 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
   const [cashReceivedStr, setCashReceivedStr] = useState('0')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [cashierName, setCashierName] = useState('Shift Active')
+  const [cashierName, setCashierName] = useState('')
+  const [lastReceipt, setLastReceipt] = useState<ReceiptData | null>(null)
 
-  useEffect(() => {
-    // Load saved cashier name if exists
-    const saved = localStorage.getItem('tjap_cashier_name')
-    if (saved) setCashierName(saved)
-  }, [])
+  const { isConnected, isConnecting, error: btError, connect, print } = useBluetoothPrinter()
   const [changeDueSnapshot, setChangeDueSnapshot] = useState(0)
   
   const total = getSubtotal()
@@ -35,6 +34,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
       setIsProcessing(false)
       setIsSuccess(false)
       setChangeDueSnapshot(0)
+      setCashierName('')
     }
   }, [isOpen])
 
@@ -112,6 +112,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
 
       // Send receipt data to parent (page level) BEFORE clearing cart
       onReceiptReady(receiptSnapshot)
+      setLastReceipt(receiptSnapshot)
       setChangeDueSnapshot(changeDue)
 
       clearCart()
@@ -124,8 +125,19 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
     }
   }
 
-  const handlePrint = () => {
-    // Short delay to ensure receipt DOM is rendered before print dialog
+  const handlePrint = async () => {
+    if (isConnected && lastReceipt) {
+      try {
+        // Fallback to plain text header since hardware doesn't support the raster image command
+        const buffer = generateEscPosReceipt(lastReceipt, "TJAP CHACOH", "Ciguling, Gang Bima No.20C\nMajenang")
+        await print(buffer)
+        return
+      } catch (err) {
+        console.error("Bluetooth print failed, falling back to window.print", err)
+      }
+    }
+
+    // Fallback
     setTimeout(() => {
       window.print()
     }, 100)
@@ -145,19 +157,33 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
             <h1 className="font-serif text-4xl text-tertiary font-bold mb-2 animate-slide-up" style={{ animationDelay: '0.1s'}}>Pembayaran Berhasil!</h1>
             <p className="font-mono text-on-surface-variant mb-12 animate-slide-up" style={{ animationDelay: '0.2s'}}>Kembalian: <strong className="text-xl">Rp {changeDueSnapshot.toLocaleString('id-ID')}</strong></p>
             
-            <div className="flex gap-4 w-full max-w-sm flex-col md:flex-row animate-slide-up" style={{ animationDelay: '0.3s'}}>
-              <button 
-                onClick={handlePrint}
-                className="flex-1 py-4 bg-surface-container-highest text-primary font-bold rounded-xl border border-primary/20 hover:bg-primary-container transition-colors shadow-sm flex items-center justify-center gap-2 uppercase tracking-wide text-xs md:text-sm font-mono"
-              >
-                <Printer className="w-5 h-5" /> Cetak Struk
-              </button>
-              <button 
-                onClick={onClose}
-                className="flex-1 py-4 varnish-cta text-white font-bold rounded-xl shadow-lg border border-primary/20 hover:opacity-90 active:scale-95 transition-all text-xs md:text-sm uppercase tracking-wide font-mono"
-              >
-                Pesanan Baru
-              </button>
+            <div className="flex gap-4 w-full max-w-sm flex-col animate-slide-up" style={{ animationDelay: '0.3s'}}>
+              {!isConnected && (
+                <button 
+                  onClick={connect}
+                  disabled={isConnecting}
+                  className="w-full py-3 bg-blue-50 text-blue-600 font-bold rounded-xl border border-blue-200 hover:bg-blue-100 transition-colors shadow-sm flex items-center justify-center gap-2 uppercase tracking-wide text-xs font-mono"
+                >
+                  {isConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />} 
+                  {isConnecting ? 'Menghubungkan...' : 'Connect Bluetooth Printer'}
+                </button>
+              )}
+              {btError && <p className="text-error text-[10px] font-mono">{btError}</p>}
+              
+              <div className="flex gap-4 w-full flex-col md:flex-row">
+                <button 
+                  onClick={handlePrint}
+                  className="flex-1 py-4 bg-surface-container-highest text-primary font-bold rounded-xl border border-primary/20 hover:bg-primary-container transition-colors shadow-sm flex items-center justify-center gap-2 uppercase tracking-wide text-xs md:text-sm font-mono"
+                >
+                  <Printer className="w-5 h-5" /> Cetak Struk
+                </button>
+                <button 
+                  onClick={onClose}
+                  className="flex-1 py-4 varnish-cta text-white font-bold rounded-xl shadow-lg border border-primary/20 hover:opacity-90 active:scale-95 transition-all text-xs md:text-sm uppercase tracking-wide font-mono"
+                >
+                  Pesanan Baru
+                </button>
+              </div>
             </div>
           </div>
         ) : (
@@ -240,19 +266,16 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
                       <input 
                         type="text" 
                         value={cashierName}
-                        onChange={(e) => {
-                          setCashierName(e.target.value)
-                          localStorage.setItem('tjap_cashier_name', e.target.value)
-                        }}
-                        placeholder="Cth: Budi, Shift 1"
-                        className="w-full bg-surface-container-low border border-outline-variant/30 px-3 py-2 text-xs md:text-sm font-mono text-tertiary focus:outline-none focus:border-primary rounded-lg transition-colors"
+                        onChange={(e) => setCashierName(e.target.value)}
+                        placeholder="Harus diisi (Cth: Ahong)"
+                        className={`w-full bg-surface-container-low border ${cashierName.trim() === '' ? 'border-error/60 focus:border-error' : 'border-outline-variant/30 focus:border-primary'} px-3 py-2 text-xs md:text-sm font-mono text-tertiary focus:outline-none rounded-lg transition-colors`}
                       />
                     </div>
                     <button 
                       onClick={handleCheckout} 
-                      disabled={isProcessing || cashReceived < total}
+                      disabled={isProcessing || cashReceived < total || cashierName.trim() === ''}
                       className={`w-full varnish-cta text-white py-4 md:py-5 rounded-lg font-serif italic text-lg md:text-xl font-bold flex items-center justify-center gap-3 shadow-xl transition-all hover:bg-primary-container ${
-                        isProcessing || cashReceived < total ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-[0.98] hover:opacity-90'
+                        isProcessing || cashReceived < total || cashierName.trim() === '' ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-[0.98] hover:opacity-90'
                       }`}
                     >
                       {isProcessing ? 'Processing...' : 'Konfirmasi Pembayaran'}
