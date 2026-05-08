@@ -130,10 +130,9 @@ export default function PosPage() {
                     title={prod.title}
                     sku={prod.sku}
                     price={prod.price}
-                    category={prod.category}
+                    category={prod.category || 'Lainnya'}
                     stock={prod.stock}
                     stockStatus={prod.stock_status}
-                    imageUrl={prod.image_url}
                     onAdd={() => addToCart(prod)}
                   />
                 ))
