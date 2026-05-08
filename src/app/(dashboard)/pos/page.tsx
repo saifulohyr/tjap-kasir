@@ -1,6 +1,6 @@
 'use client'
 
-import { Loader2, Search, Trash2, FolderOpen, ShoppingCart, X } from 'lucide-react'
+import { Loader2, Search, Trash2, FolderOpen, ShoppingCart, X, Printer } from 'lucide-react'
 import ProductCard from '@/components/pos/ProductCard'
 import CartItem from '@/components/pos/CartItem'
 import PaymentModal from '@/components/pos/PaymentModal'
@@ -273,6 +273,32 @@ export default function PosPage() {
           </span>
         )}
       </button>
+
+      {/* Floating Re-print Button — appears after a successful payment */}
+      {lastReceiptData && (
+        <div className="fixed bottom-24 lg:bottom-6 right-6 flex flex-col items-end gap-2 z-30 animate-fade-in">
+          <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/20 rounded-full pl-3 pr-1 py-1 shadow-lg text-xs font-mono text-on-surface-variant">
+            <span className="hidden sm:inline truncate max-w-[140px]">{lastReceiptData.ticketNumber}</span>
+            <button
+              onClick={() => {
+                setLastReceiptData(null)
+              }}
+              className="w-6 h-6 rounded-full hover:bg-surface-container-highest flex items-center justify-center transition-colors text-on-surface-variant/60 hover:text-on-surface"
+              title="Tutup"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 bg-primary text-white px-4 py-3 rounded-full shadow-xl hover:opacity-90 active:scale-95 transition-all font-mono font-bold text-xs uppercase tracking-wide"
+            title="Cetak ulang struk pesanan terakhir"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Cetak Ulang Struk</span>
+          </button>
+        </div>
+      )}
 
       {/* Receipt component at PAGE level — always in the DOM for print */}
       <PrintReceipt data={lastReceiptData} />

@@ -10,68 +10,7 @@ const encodeText = (text: string): Uint8Array => {
   return new TextEncoder().encode(text)
 }
 
-export const convertImageToEscPos = async (imageUrl: string, maxWidth = 384): Promise<Uint8Array> => {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image()
-    img.crossOrigin = 'Anonymous'
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return reject(new Error('Canvas 2D context not available'))
 
-      let width = img.width
-      let height = img.height
-      if (width > maxWidth) {
-        height = Math.round((height * maxWidth) / width)
-        width = maxWidth
-      }
-      
-      // Ensure width is a multiple of 8
-      width = Math.floor(width / 8) * 8
-      canvas.width = width
-      canvas.height = height
-
-      ctx.fillStyle = '#FFFFFF'
-      ctx.fillRect(0, 0, width, height)
-      ctx.drawImage(img, 0, 0, width, height)
-
-      const imageData = ctx.getImageData(0, 0, width, height)
-      const data = imageData.data
-
-      const widthBytes = width / 8
-      const command = [
-        0x1D, 0x76, 0x30, 0x00, // GS v 0
-        widthBytes & 0xFF, (widthBytes >> 8) & 0xFF,
-        height & 0xFF, (height >> 8) & 0xFF
-      ]
-
-      const bitmap = new Uint8Array(widthBytes * height)
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const idx = (y * width + x) * 4
-          const r = data[idx]
-          const g = data[idx + 1]
-          const b = data[idx + 2]
-          
-          // Threshold logic (tuned for the yellow/red logo)
-          const luminance = 0.299 * r + 0.587 * g + 0.114 * b
-          if (luminance < 190) { // Dark enough to be black dot
-            const byteIdx = (y * widthBytes) + Math.floor(x / 8)
-            const bit = 7 - (x % 8)
-            bitmap[byteIdx] |= (1 << bit)
-          }
-        }
-      }
-
-      const finalBuffer = new Uint8Array(command.length + bitmap.length)
-      finalBuffer.set(command, 0)
-      finalBuffer.set(bitmap, command.length)
-      resolve(finalBuffer)
-    }
-    img.onerror = (err) => reject(err)
-    img.src = imageUrl
-  })
-}
 
 export const generateEscPosReceipt = (data: ReceiptData, storeName: string, address: string, imageBytes?: Uint8Array | null): Uint8Array => {
   const commands: number[] = []
@@ -124,6 +63,9 @@ export const generateEscPosReceipt = (data: ReceiptData, storeName: string, addr
   addLine(`TX ID:  ${data.ticketNumber}`)
   addLine(`Waktu:  ${data.date}`)
   addLine(`Kasir:   ${data.cashierName}`)
+  if (data.customerName) {
+    addLine(`Pelanggan: ${data.customerName}`)
+  }
   addLine(`Pesanan: ${data.orderType.toUpperCase()}`)
   addLine('-'.repeat(32))
   

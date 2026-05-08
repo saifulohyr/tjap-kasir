@@ -6,7 +6,7 @@ import { useCartStore } from '@/store/useCartStore'
 import { supabase } from '@/lib/supabase'
 import { ReceiptData } from './PrintReceipt'
 import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter'
-import { generateEscPosReceipt, convertImageToEscPos } from '@/utils/escpos'
+import { generateEscPosReceipt } from '@/utils/escpos'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -20,6 +20,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [cashierName, setCashierName] = useState('')
+  const [customerName, setCustomerName] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'QRIS'>('Cash')
   const [lastReceipt, setLastReceipt] = useState<ReceiptData | null>(null)
 
@@ -36,6 +37,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
       setIsSuccess(false)
       setChangeDueSnapshot(0)
       setCashierName('')
+      setCustomerName('')
       setPaymentMethod('Cash')
     }
   }, [isOpen])
@@ -121,6 +123,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
         changeDue,
         date: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
         cashierName: cashierName || 'Shift Active',
+        customerName: customerName || undefined,
         paymentMethod,
         orderType
       }
@@ -294,15 +297,27 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
                     </div>
                   </div>
                   <div className="space-y-3 mt-auto pt-2">
-                    <div className="mb-3">
-                      <label className="font-mono text-[10px] uppercase text-on-surface-variant mb-1 block font-bold tracking-wider">Nama Kasir (Shift)</label>
-                      <input 
-                        type="text" 
-                        value={cashierName}
-                        onChange={(e) => setCashierName(e.target.value)}
-                        placeholder="Harus diisi (Cth: Ahong)"
-                        className={`w-full bg-surface-container-low border ${cashierName.trim() === '' ? 'border-error/60 focus:border-error' : 'border-outline-variant/30 focus:border-primary'} px-3 py-2 text-xs md:text-sm font-mono text-tertiary focus:outline-none rounded-lg transition-colors`}
-                      />
+                    <div className="mb-3 flex gap-3">
+                      <div className="flex-1">
+                        <label className="font-mono text-[10px] uppercase text-on-surface-variant mb-1 block font-bold tracking-wider">Nama Pelanggan</label>
+                        <input 
+                          type="text" 
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          placeholder="Opsional (Cth: Budi)"
+                          className={`w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary px-3 py-2 text-xs md:text-sm font-mono text-tertiary focus:outline-none rounded-lg transition-colors`}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="font-mono text-[10px] uppercase text-on-surface-variant mb-1 block font-bold tracking-wider">Nama Kasir</label>
+                        <input 
+                          type="text" 
+                          value={cashierName}
+                          onChange={(e) => setCashierName(e.target.value)}
+                          placeholder="Harus diisi"
+                          className={`w-full bg-surface-container-low border ${cashierName.trim() === '' ? 'border-error/60 focus:border-error' : 'border-outline-variant/30 focus:border-primary'} px-3 py-2 text-xs md:text-sm font-mono text-tertiary focus:outline-none rounded-lg transition-colors`}
+                        />
+                      </div>
                     </div>
                     <button 
                       onClick={handleCheckout} 

@@ -10,6 +10,7 @@ export interface ReceiptData {
   changeDue: number
   date: string
   cashierName: string
+  customerName?: string
   paymentMethod?: string
   orderType: string
 }
@@ -30,6 +31,7 @@ export default function PrintReceipt({ data }: PrintReceiptProps) {
   const [mounted, setMounted] = useState(false)
   
   useEffect(() => {
+    // eslint-disable-next-line
     setMounted(true)
   }, [])
 
@@ -56,13 +58,15 @@ export default function PrintReceipt({ data }: PrintReceiptProps) {
       {/* ── Header ── */}
       <div style={{ textAlign: 'center', borderBottom: '1px dashed #000', paddingBottom: '6px', marginBottom: '4px' }}>
         <div style={{ margin: '0 auto 4px auto' }}>
-          <img
+          <Image
             src="/images/icontjap.jpeg"
             alt="Logo Tjap Chacoh"
             width={56}
             height={56}
             className="receipt-logo"
             style={{ objectFit: 'contain', filter: 'grayscale(100%)', display: 'inline-block' }}
+            priority
+            unoptimized
           />
         </div>
         <div style={{ fontWeight: 'bold', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>
@@ -88,6 +92,12 @@ export default function PrintReceipt({ data }: PrintReceiptProps) {
           <span>Kasir:</span>
           <span>{data.cashierName}</span>
         </div>
+        {data.customerName && (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Pelanggan:</span>
+            <span>{data.customerName}</span>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>Pesanan:</span>
           <span style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{data.orderType}</span>
@@ -136,7 +146,7 @@ export default function PrintReceipt({ data }: PrintReceiptProps) {
       {/* ── Footer ── */}
       <div style={{ borderTop: '1px dashed #000', marginTop: '8px', paddingTop: '8px', textAlign: 'center', fontSize: '9px' }}>
         <p style={{ fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '10px', fontStyle: 'italic' }}>
-          "Kopi yang baik adalah kopi yang dihabiskan bersama."
+          &ldquo;Kopi yang baik adalah kopi yang dihabiskan bersama.&rdquo;
         </p>
         <p style={{ margin: '0 0 8px 0' }}>Terima kasih atas kunjungannya!</p>
         

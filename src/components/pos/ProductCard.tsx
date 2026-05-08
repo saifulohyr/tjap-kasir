@@ -6,12 +6,11 @@ interface ProductCardProps {
   price: number
   stock: number
   stockStatus: 'In Stock' | 'Low Stock' | 'Out of Stock' | string
-  imageUrl?: string
   category?: string
   onAdd: () => void
 }
 
-export default function ProductCard({ title, sku, price, stock, stockStatus, imageUrl, category, onAdd }: ProductCardProps) {
+export default function ProductCard({ title, sku, price, stock, stockStatus, category, onAdd }: ProductCardProps) {
   const isLowStock = stockStatus === 'Low Stock'
   const isOutOfStock = stockStatus === 'Out of Stock'
 

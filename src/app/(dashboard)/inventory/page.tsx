@@ -180,9 +180,23 @@ export default function InventoryPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 lg:px-6 py-5 text-right space-x-1 lg:space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleEdit(prod)} className="p-2 text-on-surface-variant hover:text-primary transition-colors hover:bg-primary-fixed rounded-lg"><Edit className="w-4 h-4 lg:w-5 lg:h-5" /></button>
-                      <button onClick={() => handleDelete(prod)} className="p-2 text-on-surface-variant hover:text-error transition-colors hover:bg-error-container/30 rounded-lg"><Trash2 className="w-4 h-4 lg:w-5 lg:h-5" /></button>
+                    <td className="px-4 lg:px-6 py-5 text-right">
+                      <div className="flex items-center justify-end gap-1 lg:gap-2">
+                        <button
+                          onClick={() => handleEdit(prod)}
+                          title="Edit produk"
+                          className="p-2 text-primary bg-primary/8 hover:bg-primary/15 rounded-lg transition-colors"
+                        >
+                          <Edit className="w-4 h-4 lg:w-5 lg:h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(prod)}
+                          title="Hapus produk"
+                          className="p-2 text-error bg-error/8 hover:bg-error/15 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 lg:w-5 lg:h-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )

@@ -2,6 +2,24 @@
 
 import { useState, useCallback } from 'react'
 
+// Web Bluetooth API types (not yet in standard TS lib)
+interface BluetoothCharacteristic {
+  properties: { write: boolean; writeWithoutResponse: boolean }
+  writeValueWithoutResponse: (data: Uint8Array) => Promise<void>
+  writeValue: (data: Uint8Array) => Promise<void>
+}
+interface BluetoothService {
+  getCharacteristics: () => Promise<BluetoothCharacteristic[]>
+}
+interface BluetoothGATTServer {
+  connect: () => Promise<BluetoothGATTServer>
+  getPrimaryServices: () => Promise<BluetoothService[]>
+}
+interface BluetoothDevice {
+  gatt: BluetoothGATTServer & { connected?: boolean; disconnect: () => void }
+  addEventListener: (event: string, handler: () => void) => void
+}
+
 export interface BluetoothPrinterHook {
   isConnected: boolean
   isConnecting: boolean
@@ -12,8 +30,8 @@ export interface BluetoothPrinterHook {
 }
 
 export function useBluetoothPrinter(): BluetoothPrinterHook {
-  const [device, setDevice] = useState<any>(null)
-  const [characteristic, setCharacteristic] = useState<any>(null)
+  const [device, setDevice] = useState<BluetoothDevice | null>(null)
+  const [characteristic, setCharacteristic] = useState<BluetoothCharacteristic | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,7 +43,7 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
   }, [])
 
   const connect = async () => {
-    if (typeof navigator === 'undefined' || !(navigator as any).bluetooth) {
+    if (typeof navigator === 'undefined' || !('bluetooth' in navigator)) {
       setError('Web Bluetooth is not supported in this browser. Please use Chrome or Edge.')
       return
     }
@@ -35,8 +53,7 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
 
     try {
       // Request device - accept all devices to ensure POS printers are visible
-      // Warning: In production you might want to filter by service UUID if known
-      const btDevice = await (navigator as any).bluetooth.requestDevice({
+      const btDevice = await (navigator as Navigator & { bluetooth: { requestDevice: (opts: unknown) => Promise<BluetoothDevice> } }).bluetooth.requestDevice({
         acceptAllDevices: true,
         optionalServices: [
           '000018f0-0000-1000-8000-00805f9b34fb', // Standard POS Service
@@ -51,7 +68,7 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
       if (!server) throw new Error('Failed to connect to GATT server')
 
       // Find the writable characteristic
-      let foundCharacteristic: any = null
+      let foundCharacteristic: BluetoothCharacteristic | null = null
       const services = await server.getPrimaryServices()
       
       for (const service of services) {
@@ -72,9 +89,9 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
       setDevice(btDevice)
       setCharacteristic(foundCharacteristic)
       setIsConnected(true)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      setError(err.message || 'Failed to connect to Bluetooth printer')
+      setError(err instanceof Error ? err.message : 'Failed to connect to Bluetooth printer')
     } finally {
       setIsConnecting(false)
     }
@@ -105,9 +122,9 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
            await characteristic.writeValue(chunk)
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Print Error:', err)
-      setError(err.message || 'Failed to print')
+      setError(err instanceof Error ? err.message : 'Failed to print')
     }
   }
 
@@ -120,3 +137,4 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
     print
   }
 }
+

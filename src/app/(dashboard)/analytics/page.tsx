@@ -70,7 +70,7 @@ export default function AnalyticsPage() {
           setRevenue(txns.reduce((sum, t) => sum + Number(t.total_amount), 0))
           setRevenueCash(txns.filter(t => t.payment_method === 'Cash').reduce((sum, t) => sum + Number(t.total_amount), 0))
           setRevenueQris(txns.filter(t => t.payment_method === 'QRIS').reduce((sum, t) => sum + Number(t.total_amount), 0))
-          setRecentTxns(txns.slice(0, 5).map((t, idx) => ({
+          setRecentTxns(txns.slice(0, 5).map((t) => ({
             id: t.id,
             ticket_number: t.ticket_number,
             type: t.order_type, // Using actual data from DB
