@@ -251,23 +251,40 @@ export default function PosPage() {
               </div>
 
               {lastReceiptData && (
-                <button
-                  onClick={async () => {
-                    if (btHook.isConnected && lastReceiptData) {
-                      try {
-                        const buffer = generateEscPosReceipt(lastReceiptData, "TJAP CHACOH", "Ciguling, Gang Bima No.20C\nMajenang")
-                        await btHook.print(buffer)
-                        return
-                      } catch (err) {
-                        console.error("Bluetooth print failed, falling back to window.print", err)
+                <div className="bg-primary-container/30 border border-primary/15 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Pesanan Terakhir</span>
+                    <button
+                      onClick={() => setLastReceiptData(null)}
+                      className="text-on-surface-variant/50 hover:text-on-surface transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-primary">{lastReceiptData.ticketNumber}</span>
+                    {lastReceiptData.dailySequence > 0 && (
+                      <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[9px] font-mono font-bold">#{lastReceiptData.dailySequence}</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (btHook.isConnected && lastReceiptData) {
+                        try {
+                          const buffer = generateEscPosReceipt(lastReceiptData, "TJAP CHACOH", "Ciguling, Gang Bima No.20C\nMajenang")
+                          await btHook.print(buffer)
+                          return
+                        } catch (err) {
+                          console.error("Bluetooth print failed, falling back to window.print", err)
+                        }
                       }
-                    }
-                    setTimeout(() => window.print(), 100)
-                  }}
-                  className="w-full py-2.5 bg-surface-container-highest text-primary rounded-lg font-mono text-[10px] lg:text-xs uppercase hover:bg-primary-container transition-colors font-bold tracking-wider border border-primary/20 flex justify-center items-center gap-2 shadow-sm"
-                >
-                  <Printer className="w-4 h-4" /> Cetak Ulang: {lastReceiptData.ticketNumber}
-                </button>
+                      setTimeout(() => window.print(), 100)
+                    }}
+                    className="w-full py-2.5 bg-primary text-white rounded-lg font-mono text-[10px] lg:text-xs uppercase hover:opacity-90 active:scale-[0.98] transition-all font-bold tracking-wider flex justify-center items-center gap-2 shadow-button"
+                  >
+                    <Printer className="w-4 h-4" /> Cetak Ulang Struk
+                  </button>
+                </div>
               )}
 
               <button 
