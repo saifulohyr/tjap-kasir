@@ -10,6 +10,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useCartStore } from '@/store/useCartStore'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types/database.types'
+import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter'
+import { generateEscPosReceipt } from '@/utils/escpos'
 
 const categories = ['All', 'Khopi', 'Non-Khopi', 'Snack', 'Makanan', 'Topping']
 
@@ -22,6 +24,7 @@ export default function PosPage() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [lastReceiptData, setLastReceiptData] = useState<ReceiptData | null>(null)
+  const btHook = useBluetoothPrinter()
 
   /** Callback from PaymentModal — stores receipt data at page level for printing */
   const handleReceiptReady = useCallback((data: ReceiptData) => {
@@ -289,7 +292,21 @@ export default function PosPage() {
             </button>
           </div>
           <button
-            onClick={() => window.print()}
+            onClick={async () => {
+              if (btHook.isConnected && lastReceiptData) {
+                try {
+                  const buffer = generateEscPosReceipt(lastReceiptData, "TJAP CHACOH", "Ciguling, Gang Bima No.20C\nMajenang")
+                  await btHook.print(buffer)
+                  return
+                } catch (err) {
+                  console.error("Bluetooth print failed, falling back to window.print", err)
+                }
+              }
+              // Fallback
+              setTimeout(() => {
+                window.print()
+              }, 100)
+            }}
             className="flex items-center gap-2 bg-primary text-white px-4 py-3 rounded-full shadow-xl hover:opacity-90 active:scale-95 transition-all font-mono font-bold text-xs uppercase tracking-wide"
             title="Cetak ulang struk pesanan terakhir"
           >
@@ -306,6 +323,7 @@ export default function PosPage() {
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         onReceiptReady={handleReceiptReady}
+        btHook={btHook}
       />
 
       <SavedDraftsModal

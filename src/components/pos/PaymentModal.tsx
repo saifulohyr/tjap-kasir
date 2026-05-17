@@ -12,9 +12,10 @@ interface PaymentModalProps {
   isOpen: boolean
   onClose: () => void
   onReceiptReady: (data: ReceiptData) => void
+  btHook: ReturnType<typeof useBluetoothPrinter>
 }
 
-export default function PaymentModal({ isOpen, onClose, onReceiptReady }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, onClose, onReceiptReady, btHook }: PaymentModalProps) {
   const { cart, getSubtotal, clearCart, orderType } = useCartStore()
   const [cashReceivedStr, setCashReceivedStr] = useState('0')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -24,7 +25,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'QRIS'>('Cash')
   const [lastReceipt, setLastReceipt] = useState<ReceiptData | null>(null)
 
-  const { isConnected, isConnecting, error: btError, connect, print } = useBluetoothPrinter()
+  const { isConnected, isConnecting, error: btError, connect, print } = btHook
   const [changeDueSnapshot, setChangeDueSnapshot] = useState(0)
   
   const total = getSubtotal()
@@ -82,6 +83,15 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
     try {
       const ticketNumber = `TX-${Math.floor(10000 + Math.random() * 90000)}`
       
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const { count } = await supabase
+        .from('transactions')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', today.toISOString())
+        
+      const dailySequence = (count ?? 0) + 1
+      
       const { data: txn, error } = await supabase.from('transactions').insert({
         ticket_number: ticketNumber,
         total_amount: total,
@@ -125,7 +135,8 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady }: Paymen
         cashierName: cashierName || 'Shift Active',
         customerName: customerName || undefined,
         paymentMethod,
-        orderType
+        orderType,
+        dailySequence
       }
 
       // Send receipt data to parent (page level) BEFORE clearing cart

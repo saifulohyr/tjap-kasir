@@ -18,6 +18,7 @@ type Order = {
   created_at: string
   kitchen_status: 'pending' | 'cooking' | 'completed'
   transaction_items: TransactionItem[]
+  dailySequence?: number
 }
 
 export default function KitchenDashboard() {
@@ -75,9 +76,10 @@ export default function KitchenDashboard() {
     await supabase.from('transactions').update({ kitchen_status: status }).eq('id', id)
   }
 
-  const incoming = orders.filter(o => o.kitchen_status === 'pending')
-  const processing = orders.filter(o => o.kitchen_status === 'cooking')
-  const done = orders.filter(o => o.kitchen_status === 'completed').sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  const ordersWithSequence = orders.map((o, idx) => ({ ...o, dailySequence: idx + 1 }))
+  const incoming = ordersWithSequence.filter(o => o.kitchen_status === 'pending')
+  const processing = ordersWithSequence.filter(o => o.kitchen_status === 'cooking')
+  const done = ordersWithSequence.filter(o => o.kitchen_status === 'completed').sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
   // format time mm:ss since created
   const formatTime = (iso: string) => {
@@ -101,10 +103,10 @@ export default function KitchenDashboard() {
 
   return (
     <>
-      <div className="flex-1 p-4 lg:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 overflow-hidden bg-background">
+      <div className="flex-1 p-4 lg:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 min-h-0 bg-background">
         
         {/* ── Column: Incoming (Pending) ── */}
-        <div className="flex flex-col h-full space-y-3 min-w-0">
+        <div className="flex flex-col h-full space-y-3 min-w-0 min-h-0">
           <div className="flex items-center justify-between px-1 shrink-0">
             <h3 className="font-serif text-lg lg:text-xl font-bold text-tertiary flex items-center gap-2">
               Pesanan Masuk
@@ -113,7 +115,7 @@ export default function KitchenDashboard() {
             <MoreVertical className="w-5 h-5 text-outline cursor-pointer hover:text-primary transition-colors" />
           </div>
           
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 pb-4 custom-scrollbar">
             {incoming.length === 0 ? (
                <div className="h-full flex items-center justify-center font-mono opacity-40 text-sm">Belum ada pesanan masuk.</div>
             ) : (
@@ -121,7 +123,7 @@ export default function KitchenDashboard() {
                 <div key={order.id} className="order-card-gradient rounded-xl p-4 lg:p-5 border border-outline-variant/20 shadow-sm relative overflow-hidden flex flex-col gap-3 animate-slide-up" style={{ animationDelay: `${idx * 50}ms` }}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
-                      <span className="font-mono text-[10px] text-secondary uppercase tracking-widest">{order.ticket_number}</span>
+                      <span className="font-mono text-[10px] text-secondary uppercase tracking-widest">#{order.dailySequence} • {order.ticket_number}</span>
                       <h4 className="font-serif text-base lg:text-lg font-bold text-on-surface truncate">{order.order_type}</h4>
                     </div>
                     <div className="font-mono text-xs lg:text-sm font-bold text-error bg-error-container/30 px-2 py-1 rounded shrink-0 flex items-center gap-1">
@@ -151,14 +153,14 @@ export default function KitchenDashboard() {
         </div>
 
         {/* ── Column: Processing (Cooking) ── */}
-        <div className="flex flex-col h-full space-y-3 min-w-0">
+        <div className="flex flex-col h-full space-y-3 min-w-0 min-h-0">
           <div className="flex items-center justify-between px-1 shrink-0">
             <h3 className="font-serif text-lg lg:text-xl font-bold text-tertiary flex items-center gap-2">
               Sedang Dibuat
               <span className="bg-secondary/10 text-secondary px-2 py-0.5 rounded text-[10px] lg:text-xs font-mono">{processing.length.toString().padStart(2, '0')}</span>
             </h3>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 pb-4 custom-scrollbar">
             {processing.length === 0 ? (
                <div className="h-full flex items-center justify-center font-mono opacity-40 text-sm">Tidak ada yang sedang diproses.</div>
             ) : (
@@ -167,7 +169,7 @@ export default function KitchenDashboard() {
                   <div className="absolute top-0 right-0 w-12 h-1 bg-primary rounded-bl-sm"></div>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
-                      <span className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold">In Production • {order.ticket_number}</span>
+                      <span className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold">#{order.dailySequence} • In Production • {order.ticket_number}</span>
                       <h4 className="font-serif text-base lg:text-lg font-bold text-on-surface truncate">{order.order_type}</h4>
                     </div>
                     <div className="font-mono text-xs lg:text-sm font-bold text-on-primary bg-primary px-2 py-1 rounded shadow-sm shrink-0">
@@ -194,7 +196,7 @@ export default function KitchenDashboard() {
         </div>
 
         {/* ── Column: Done (Completed) ── */}
-        <div className="flex flex-col h-full space-y-3 min-w-0 hidden xl:flex">
+        <div className="flex flex-col h-full space-y-3 min-w-0 min-h-0 hidden xl:flex">
           <div className="flex items-center justify-between px-1 shrink-0">
             <h3 className="font-serif text-lg lg:text-xl font-bold text-tertiary flex items-center gap-2">
               Selesai
@@ -202,7 +204,7 @@ export default function KitchenDashboard() {
             </h3>
           </div>
           
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar opacity-70 grayscale-[0.1] hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+          <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 pb-4 custom-scrollbar opacity-70 grayscale-[0.1] hover:grayscale-0 hover:opacity-100 transition-all duration-500">
             {done.length === 0 ? (
                <div className="h-full flex items-center justify-center font-mono opacity-40 text-sm">Belum ada order selesai hari ini.</div>
             ) : (
@@ -210,7 +212,7 @@ export default function KitchenDashboard() {
                 <div key={order.id} className="bg-surface-container-low rounded-xl p-4 lg:p-5 border border-outline-variant/10 flex flex-col gap-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="font-mono text-[10px] text-secondary uppercase tracking-widest">{order.ticket_number}</span>
+                      <span className="font-mono text-[10px] text-secondary uppercase tracking-widest">#{order.dailySequence} • {order.ticket_number}</span>
                       <h4 className="font-serif text-base lg:text-lg font-bold text-on-surface">{order.order_type}</h4>
                     </div>
                     <CheckCircle2 className="w-5 h-5 text-green-700 shrink-0" />

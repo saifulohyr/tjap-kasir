@@ -13,6 +13,7 @@ export interface ReceiptData {
   customerName?: string
   paymentMethod?: string
   orderType: string
+  dailySequence: number
 }
 
 interface PrintReceiptProps {
@@ -83,6 +84,10 @@ export default function PrintReceipt({ data }: PrintReceiptProps) {
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>TX ID:</span>
           <span style={{ fontWeight: 'bold' }}>{data.ticketNumber}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '2px' }}>
+          <span>Pesanan Ke:</span>
+          <span style={{ fontWeight: 'bold', fontSize: '11px' }}>{data.dailySequence}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>Waktu:</span>

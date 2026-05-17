@@ -61,6 +61,7 @@ export const generateEscPosReceipt = (data: ReceiptData, storeName: string, addr
   
   // Meta details
   addLine(`TX ID:  ${data.ticketNumber}`)
+  addLine(`Pesanan Ke: ${data.dailySequence}`)
   addLine(`Waktu:  ${data.date}`)
   addLine(`Kasir:   ${data.cashierName}`)
   if (data.customerName) {
