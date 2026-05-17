@@ -42,13 +42,13 @@ VALUES
   ('Mix Plater',                      'SNCK-008',  'SNACK', 16000, 99, 'in_stock',    NULL),
   ('Jajan Ringan',                    'SNCK-009',  'SNACK', 5000,  99, 'in_stock',    NULL),
 
-  -- ── RICE BOWL ────────────────────────────────────────────
-  ('Mie Goreng',                      'RICE-001',  'RICE BOWL', 7000,  99, 'in_stock', NULL),
-  ('Nasi Telor',                      'RICE-002',  'RICE BOWL', 10000, 99, 'in_stock', NULL),
-  ('Nasi Kulit',                      'RICE-003',  'RICE BOWL', 14000, 99, 'in_stock', NULL),
-  ('Nasi Ayam Suwir',                 'RICE-004',  'RICE BOWL', 14000, 99, 'in_stock', NULL),
-  ('Nasi Ayam Lada Hitam',            'RICE-005',  'RICE BOWL', 15000, 99, 'in_stock', NULL),
-  ('Mie Ayam Punk Shit',              'RICE-006',  'RICE BOWL', 15000, 99, 'in_stock', NULL),
+  -- ── MAKANAN ─────────────────────────────────────────────
+  ('Mie Goreng',                      'RICE-001',  'MAKANAN', 7000,  99, 'in_stock', NULL),
+  ('Nasi Telor',                      'RICE-002',  'MAKANAN', 10000, 99, 'in_stock', NULL),
+  ('Nasi Kulit',                      'RICE-003',  'MAKANAN', 14000, 99, 'in_stock', NULL),
+  ('Nasi Ayam Suwir',                 'RICE-004',  'MAKANAN', 14000, 99, 'in_stock', NULL),
+  ('Nasi Ayam Lada Hitam',            'RICE-005',  'MAKANAN', 15000, 99, 'in_stock', NULL),
+  ('Mie Ayam Punk Shit',              'RICE-006',  'MAKANAN', 15000, 99, 'in_stock', NULL),
 
   -- ── TOPPING ──────────────────────────────────────────────
   ('Telor',                           'TOPP-001',  'TOPPING', 4000, 99, 'in_stock', NULL),

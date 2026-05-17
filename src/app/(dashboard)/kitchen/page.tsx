@@ -315,6 +315,19 @@ export default function KitchenDashboard() {
             <span className="font-mono text-[10px] text-secondary uppercase">All Orders:</span>
             <span className="font-mono text-[11px] font-bold text-on-surface">{orders.length}</span>
           </div>
+          {/* Bluetooth Printer Status */}
+          <button
+            onClick={btHook.isConnected ? btHook.disconnect : btHook.connect}
+            disabled={btHook.isConnecting}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider transition-all ${
+              btHook.isConnected
+                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container-highest border border-outline-variant/20'
+            }`}
+          >
+            <Printer className="w-3 h-3" />
+            {btHook.isConnecting ? 'Connecting...' : btHook.isConnected ? '🟢 Printer Ready' : 'Connect Printer'}
+          </button>
         </div>
         
         <div className="flex items-center gap-3 lg:gap-4">

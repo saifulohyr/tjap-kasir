@@ -26,9 +26,18 @@ export default function PosPage() {
   const [lastReceiptData, setLastReceiptData] = useState<ReceiptData | null>(null)
   const btHook = useBluetoothPrinter()
 
+  // Persist last receipt to localStorage so it survives tab navigation
+  useEffect(() => {
+    const saved = localStorage.getItem('tjap-last-receipt')
+    if (saved) {
+      try { setLastReceiptData(JSON.parse(saved)) } catch { /* ignore */ }
+    }
+  }, [])
+
   /** Callback from PaymentModal — stores receipt data at page level for printing */
   const handleReceiptReady = useCallback((data: ReceiptData) => {
     setLastReceiptData(data)
+    localStorage.setItem('tjap-last-receipt', JSON.stringify(data))
   }, [])
   
   const { cart, drafts, addToCart, removeFromCart, updateQuantity, updateNote, getSubtotal, clearCart, saveDraft, orderType, setOrderType } = useCartStore()
@@ -255,7 +264,10 @@ export default function PosPage() {
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Pesanan Terakhir</span>
                     <button
-                      onClick={() => setLastReceiptData(null)}
+                      onClick={() => {
+                        setLastReceiptData(null)
+                        localStorage.removeItem('tjap-last-receipt')
+                      }}
                       className="text-on-surface-variant/50 hover:text-on-surface transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
