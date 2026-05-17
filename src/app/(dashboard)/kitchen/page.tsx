@@ -1,14 +1,18 @@
 'use client'
 
-import { MoreVertical, CheckCircle2, Loader2, Clock } from 'lucide-react'
+import { MoreVertical, CheckCircle2, Loader2, Clock, Printer } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter'
+import { generateEscPosReceipt } from '@/utils/escpos'
+import PrintReceipt, { ReceiptData } from '@/components/pos/PrintReceipt'
 
 type TransactionItem = {
   id: string
   title: string
   quantity: number
   note: string | null
+  price_at_time: number
 }
 
 type Order = {
@@ -19,12 +23,18 @@ type Order = {
   kitchen_status: 'pending' | 'cooking' | 'completed'
   transaction_items: TransactionItem[]
   dailySequence?: number
+  customer_name?: string
+  cashier_name?: string
+  total_amount: number
+  payment_method: string
 }
 
 export default function KitchenDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [lastSync, setLastSync] = useState<string>('--:--:--')
+  const [printTarget, setPrintTarget] = useState<ReceiptData | null>(null)
+  const btHook = useBluetoothPrinter()
 
   const fetchOrders = async () => {
     // Only fetch today's orders to avoid massive payload
@@ -35,7 +45,8 @@ export default function KitchenDashboard() {
       .from('transactions')
       .select(`
         id, ticket_number, order_type, created_at, kitchen_status,
-        transaction_items ( id, title, quantity, note )
+        customer_name, cashier_name, total_amount, payment_method,
+        transaction_items ( id, title, quantity, note, price_at_time )
       `)
       .gte('created_at', today.toISOString())
       .in('status', ['Completed']) // Only paid ones
@@ -87,6 +98,39 @@ export default function KitchenDashboard() {
     return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
   }
 
+  const handlePrintOrder = async (order: Order) => {
+    const receiptData: ReceiptData = {
+      ticketNumber: order.ticket_number,
+      items: order.transaction_items.map(i => ({
+        title: i.title,
+        quantity: i.quantity,
+        price: i.price_at_time || 0
+      })),
+      total: order.total_amount,
+      cashReceived: order.total_amount, // If no strict cash record, use total
+      changeDue: 0,
+      date: new Date(order.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
+      cashierName: order.cashier_name || 'Kasir',
+      customerName: order.customer_name,
+      paymentMethod: order.payment_method,
+      orderType: order.order_type,
+      dailySequence: order.dailySequence ?? 0,
+    }
+    
+    if (btHook.isConnected) {
+      try {
+        const buffer = generateEscPosReceipt(receiptData, "TJAP CHACOH", "Ciguling, Gang Bima No.20C\nMajenang")
+        await btHook.print(buffer)
+        return
+      } catch (err) {
+         console.error("Print Error", err)
+      }
+    }
+    
+    setPrintTarget(receiptData)
+    setTimeout(() => window.print(), 100)
+  }
+
   const calculateElapsed = (iso: string) => {
     const diff = Math.floor((new Date().getTime() - new Date(iso).getTime()) / 60000)
     return diff > 0 ? `${diff}m` : '<1m'
@@ -125,6 +169,11 @@ export default function KitchenDashboard() {
                     <div className="min-w-0">
                       <span className="font-mono text-[10px] text-secondary uppercase tracking-widest">#{order.dailySequence} • {order.ticket_number}</span>
                       <h4 className="font-serif text-base lg:text-lg font-bold text-on-surface truncate">{order.order_type}</h4>
+                      {order.customer_name && (
+                        <span className="inline-block mt-1 font-mono text-[10px] font-bold text-white bg-blue-600/80 px-2 py-0.5 rounded shadow-sm">
+                          atas nama: {order.customer_name}
+                        </span>
+                      )}
                     </div>
                     <div className="font-mono text-xs lg:text-sm font-bold text-error bg-error-container/30 px-2 py-1 rounded shrink-0 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
@@ -141,11 +190,18 @@ export default function KitchenDashboard() {
                       </div>
                     ))}
                   </div>
-                  <button 
-                    onClick={() => updateKitchenStatus(order.id, 'cooking')}
-                    className="w-full py-2.5 bg-primary text-white rounded-lg font-bold text-sm tracking-widest uppercase hover:bg-primary-hover active:scale-[0.98] transition-all shadow-button">
-                    Proses Sekarang
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handlePrintOrder(order)}
+                      className="flex-1 py-2.5 bg-surface-container-high text-primary rounded-lg font-bold text-sm tracking-widest uppercase hover:bg-surface-container-highest transition-all shadow-button flex items-center justify-center gap-2">
+                      <Printer className="w-4 h-4" /> Cetak
+                    </button>
+                    <button 
+                      onClick={() => updateKitchenStatus(order.id, 'cooking')}
+                      className="flex-[2] py-2.5 bg-primary text-white rounded-lg font-bold text-sm tracking-widest uppercase hover:bg-primary-hover active:scale-[0.98] transition-all shadow-button">
+                      Proses Sekarang
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -171,6 +227,11 @@ export default function KitchenDashboard() {
                     <div className="min-w-0">
                       <span className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold">#{order.dailySequence} • In Production • {order.ticket_number}</span>
                       <h4 className="font-serif text-base lg:text-lg font-bold text-on-surface truncate">{order.order_type}</h4>
+                      {order.customer_name && (
+                        <span className="inline-block mt-1 font-mono text-[10px] font-bold text-white bg-blue-600/80 px-2 py-0.5 rounded shadow-sm">
+                          atas nama: {order.customer_name}
+                        </span>
+                      )}
                     </div>
                     <div className="font-mono text-xs lg:text-sm font-bold text-on-primary bg-primary px-2 py-1 rounded shadow-sm shrink-0">
                       {calculateElapsed(order.created_at)}
@@ -184,11 +245,18 @@ export default function KitchenDashboard() {
                       </div>
                     ))}
                   </div>
-                  <button 
-                    onClick={() => updateKitchenStatus(order.id, 'completed')}
-                    className="w-full py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg font-bold text-sm tracking-widest uppercase shadow-button hover:opacity-90 active:scale-[0.98] transition-all">
-                    Selesai
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handlePrintOrder(order)}
+                      className="flex-1 py-2.5 bg-surface-container-high text-primary rounded-lg font-bold text-sm tracking-widest uppercase hover:bg-surface-container-highest transition-all shadow-button flex items-center justify-center gap-2">
+                      <Printer className="w-4 h-4" /> Cetak
+                    </button>
+                    <button 
+                      onClick={() => updateKitchenStatus(order.id, 'completed')}
+                      className="flex-[2] py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg font-bold text-sm tracking-widest uppercase shadow-button hover:opacity-90 active:scale-[0.98] transition-all">
+                      Selesai
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -217,13 +285,21 @@ export default function KitchenDashboard() {
                     </div>
                     <CheckCircle2 className="w-5 h-5 text-green-700 shrink-0" />
                   </div>
+                  {order.customer_name && (
+                    <span className="inline-block mt-0.5 font-mono text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded self-start">
+                      atas nama: {order.customer_name}
+                    </span>
+                  )}
                   <div className="space-y-1.5 py-2 border-y border-outline-variant/5">
                     {order.transaction_items.map(item => (
                        <p key={item.id} className="text-sm text-on-surface font-medium line-through opacity-70">{item.quantity}x {item.title}</p>
                     ))}
                   </div>
-                  <div className="flex items-center justify-center gap-2 text-secondary font-mono text-[10px] uppercase">
-                    Closed • {formatTime(order.created_at)}
+                  <div className="flex items-center justify-between gap-2 text-secondary font-mono text-[10px] uppercase">
+                    <span>Closed • {formatTime(order.created_at)}</span>
+                    <button onClick={() => handlePrintOrder(order)} className="text-primary hover:underline flex items-center gap-1">
+                      <Printer className="w-3 h-3" /> Cetak Ulang
+                    </button>
                   </div>
                 </div>
               ))
@@ -249,6 +325,7 @@ export default function KitchenDashboard() {
           <span className="text-[10px] font-mono text-secondary uppercase hidden lg:inline">Last Sync: {lastSync}</span>
         </div>
       </footer>
+      <PrintReceipt data={printTarget} />
     </>
   )
 }

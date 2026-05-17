@@ -97,7 +97,9 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady, btHook }
         total_amount: total,
         payment_method: paymentMethod,
         status: 'Completed',
-        order_type: orderType
+        order_type: orderType,
+        customer_name: customerName || null,
+        cashier_name: cashierName || 'Kasir'
       }).select().single()
 
       if (error) throw error
