@@ -1,11 +1,12 @@
 'use client'
 
 import { MoreVertical, CheckCircle2, Loader2, Clock, Printer, Square, SquareCheckBig } from 'lucide-react'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter'
 import { generateEscPosReceipt } from '@/utils/escpos'
 import PrintReceipt, { ReceiptData } from '@/components/pos/PrintReceipt'
+import { useKitchenStore } from '@/store/useKitchenStore'
 
 type TransactionItem = {
   id: string
@@ -36,29 +37,8 @@ export default function KitchenDashboard() {
   const [printTarget, setPrintTarget] = useState<ReceiptData | null>(null)
   const btHook = useBluetoothPrinter()
 
-  // ── Per-item checklist state (local only, resets on refresh) ──
-  const [itemChecks, setItemChecks] = useState<Record<string, Set<string>>>({})
-
-  const toggleItemCheck = useCallback((orderId: string, itemId: string) => {
-    setItemChecks(prev => {
-      const current = new Set(prev[orderId] || [])
-      if (current.has(itemId)) {
-        current.delete(itemId)
-      } else {
-        current.add(itemId)
-      }
-      return { ...prev, [orderId]: current }
-    })
-  }, [])
-
-  const checkedCount = useCallback((orderId: string, totalItems: TransactionItem[]) => {
-    return totalItems.filter(item => itemChecks[orderId]?.has(item.id)).length
-  }, [itemChecks])
-
-  const allItemsDone = useCallback((orderId: string, totalItems: TransactionItem[]) => {
-    if (totalItems.length === 0) return true
-    return checkedCount(orderId, totalItems) === totalItems.length
-  }, [checkedCount])
+  // ── Per-item checklist (Zustand — persists across navigation) ──
+  const { itemChecks, toggleItemCheck, clearOrderChecks, isItemChecked, getCheckedCount, allItemsDone } = useKitchenStore()
 
   const fetchOrders = async () => {
     // Only fetch today's orders to avoid massive payload
@@ -263,8 +243,9 @@ export default function KitchenDashboard() {
                   </div>
                   {/* ── Progress Bar ── */}
                   {(() => {
-                    const done = checkedCount(order.id, order.transaction_items)
-                    const total = order.transaction_items.length
+                    const itemIds = order.transaction_items.map(i => i.id)
+                    const done = getCheckedCount(order.id, itemIds)
+                    const total = itemIds.length
                     const pct = total > 0 ? Math.round((done / total) * 100) : 0
                     const isComplete = done === total
                     return (
@@ -289,7 +270,7 @@ export default function KitchenDashboard() {
                   {/* ── Checklist Items ── */}
                   <div className="space-y-1 py-2 border-y border-outline-variant/20">
                     {order.transaction_items.map((item) => {
-                      const isChecked = itemChecks[order.id]?.has(item.id) ?? false
+                      const isChecked = isItemChecked(order.id, item.id)
                       return (
                         <button
                           key={item.id}
@@ -335,9 +316,10 @@ export default function KitchenDashboard() {
 
                   {/* ── Action Buttons ── */}
                   {(() => {
-                    const isComplete = allItemsDone(order.id, order.transaction_items)
-                    const done = checkedCount(order.id, order.transaction_items)
-                    const total = order.transaction_items.length
+                    const itemIds = order.transaction_items.map(i => i.id)
+                    const isComplete = allItemsDone(order.id, itemIds)
+                    const done = getCheckedCount(order.id, itemIds)
+                    const total = itemIds.length
                     return (
                       <div className="flex gap-2">
                         <button 
@@ -349,12 +331,7 @@ export default function KitchenDashboard() {
                           onClick={() => {
                             if (isComplete) {
                               updateKitchenStatus(order.id, 'completed')
-                              // Clean up checklist state for this order
-                              setItemChecks(prev => {
-                                const next = { ...prev }
-                                delete next[order.id]
-                                return next
-                              })
+                              clearOrderChecks(order.id)
                             }
                           }}
                           disabled={!isComplete}
