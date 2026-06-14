@@ -1,7 +1,7 @@
 'use client'
 
-import { MoreVertical, CheckCircle2, Loader2, Clock, Printer } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { MoreVertical, CheckCircle2, Loader2, Clock, Printer, Square, SquareCheckBig } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter'
 import { generateEscPosReceipt } from '@/utils/escpos'
@@ -35,6 +35,30 @@ export default function KitchenDashboard() {
   const [lastSync, setLastSync] = useState<string>('--:--:--')
   const [printTarget, setPrintTarget] = useState<ReceiptData | null>(null)
   const btHook = useBluetoothPrinter()
+
+  // ── Per-item checklist state (local only, resets on refresh) ──
+  const [itemChecks, setItemChecks] = useState<Record<string, Set<string>>>({})
+
+  const toggleItemCheck = useCallback((orderId: string, itemId: string) => {
+    setItemChecks(prev => {
+      const current = new Set(prev[orderId] || [])
+      if (current.has(itemId)) {
+        current.delete(itemId)
+      } else {
+        current.add(itemId)
+      }
+      return { ...prev, [orderId]: current }
+    })
+  }, [])
+
+  const checkedCount = useCallback((orderId: string, totalItems: TransactionItem[]) => {
+    return totalItems.filter(item => itemChecks[orderId]?.has(item.id)).length
+  }, [itemChecks])
+
+  const allItemsDone = useCallback((orderId: string, totalItems: TransactionItem[]) => {
+    if (totalItems.length === 0) return true
+    return checkedCount(orderId, totalItems) === totalItems.length
+  }, [checkedCount])
 
   const fetchOrders = async () => {
     // Only fetch today's orders to avoid massive payload
@@ -237,26 +261,118 @@ export default function KitchenDashboard() {
                       {calculateElapsed(order.created_at)}
                     </div>
                   </div>
-                  <div className="space-y-1.5 py-2 border-y border-outline-variant/20">
-                    {order.transaction_items.map((item) => (
-                      <div key={item.id} className="flex flex-col items-start gap-0.5 w-full">
-                        <p className="text-sm text-on-surface font-bold break-words">{item.quantity}x {item.title}</p>
-                        {item.note && <span className="text-[10px] font-mono text-error font-bold uppercase animate-pulse">Note: {item.note}</span>}
+                  {/* ── Progress Bar ── */}
+                  {(() => {
+                    const done = checkedCount(order.id, order.transaction_items)
+                    const total = order.transaction_items.length
+                    const pct = total > 0 ? Math.round((done / total) * 100) : 0
+                    const isComplete = done === total
+                    return (
+                      <div className="flex items-center gap-2.5 py-1.5">
+                        <div className="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ease-out ${
+                              isComplete ? 'bg-green-600' : 'bg-primary'
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className={`font-mono text-[10px] font-bold tracking-wider shrink-0 ${
+                          isComplete ? 'text-green-700' : 'text-on-surface-variant'
+                        }`}>
+                          {done} / {total} siap {isComplete && '✓'}
+                        </span>
                       </div>
-                    ))}
+                    )
+                  })()}
+
+                  {/* ── Checklist Items ── */}
+                  <div className="space-y-1 py-2 border-y border-outline-variant/20">
+                    {order.transaction_items.map((item) => {
+                      const isChecked = itemChecks[order.id]?.has(item.id) ?? false
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => toggleItemCheck(order.id, item.id)}
+                          className={`flex items-start gap-2.5 w-full text-left px-2 py-1.5 rounded-lg transition-all duration-200 group/item ${
+                            isChecked
+                              ? 'bg-green-50 hover:bg-green-100/80'
+                              : 'hover:bg-surface-container-highest/50'
+                          }`}
+                        >
+                          {/* Check Icon */}
+                          <span className="mt-0.5 shrink-0">
+                            {isChecked ? (
+                              <SquareCheckBig className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Square className="w-4 h-4 text-outline-variant group-hover/item:text-primary transition-colors" />
+                            )}
+                          </span>
+                          {/* Item Text */}
+                          <div className="flex flex-col min-w-0">
+                            <span className={`text-sm font-bold break-words transition-all duration-200 ${
+                              isChecked
+                                ? 'line-through text-green-700/70'
+                                : 'text-on-surface'
+                            }`}>
+                              {item.quantity}x {item.title}
+                            </span>
+                            {item.note && (
+                              <span className={`text-[10px] font-mono font-bold uppercase ${
+                                isChecked
+                                  ? 'text-green-600/50 line-through'
+                                  : 'text-error animate-pulse'
+                              }`}>
+                                Note: {item.note}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      )
+                    })}
                   </div>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => handlePrintOrder(order)}
-                      className="flex-1 py-2.5 bg-surface-container-high text-primary rounded-lg font-bold text-sm tracking-widest uppercase hover:bg-surface-container-highest transition-all shadow-button flex items-center justify-center gap-2">
-                      <Printer className="w-4 h-4" /> Cetak
-                    </button>
-                    <button 
-                      onClick={() => updateKitchenStatus(order.id, 'completed')}
-                      className="flex-[2] py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg font-bold text-sm tracking-widest uppercase shadow-button hover:opacity-90 active:scale-[0.98] transition-all">
-                      Selesai
-                    </button>
-                  </div>
+
+                  {/* ── Action Buttons ── */}
+                  {(() => {
+                    const isComplete = allItemsDone(order.id, order.transaction_items)
+                    const done = checkedCount(order.id, order.transaction_items)
+                    const total = order.transaction_items.length
+                    return (
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handlePrintOrder(order)}
+                          className="flex-1 py-2.5 bg-surface-container-high text-primary rounded-lg font-bold text-sm tracking-widest uppercase hover:bg-surface-container-highest transition-all shadow-button flex items-center justify-center gap-2">
+                          <Printer className="w-4 h-4" /> Cetak
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if (isComplete) {
+                              updateKitchenStatus(order.id, 'completed')
+                              // Clean up checklist state for this order
+                              setItemChecks(prev => {
+                                const next = { ...prev }
+                                delete next[order.id]
+                                return next
+                              })
+                            }
+                          }}
+                          disabled={!isComplete}
+                          className={`flex-[2] py-2.5 rounded-lg font-bold text-sm tracking-widest uppercase shadow-button transition-all flex items-center justify-center gap-1.5 ${
+                            isComplete
+                              ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:opacity-90 active:scale-[0.98] animate-pulse-soft'
+                              : 'bg-surface-container-highest text-on-surface-variant/50 cursor-not-allowed'
+                          }`}>
+                          {isComplete ? (
+                            <><CheckCircle2 className="w-4 h-4" /> Pesanan Selesai ✓</>
+                          ) : (
+                            <>Selesai ({done}/{total})</>
+                          )}
+                        </button>
+                      </div>
+                    )
+                  })()}
+
                 </div>
               ))
             )}
