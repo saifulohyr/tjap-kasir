@@ -31,10 +31,10 @@ export default function CartItem({
   onIncrement,
   onDecrement,
   onRemove,
-  onUpdateNote
+  onUpdateNote,
 }: CartItemProps) {
   const [isOpenNote, setIsOpenNote] = useState(Boolean(note))
-  const formattedPrice = (price * quantity).toLocaleString('id-ID').replace(',', '.')
+  const formattedPrice = `Rp ${(price * quantity).toLocaleString('id-ID')}`
 
   const handleAddChip = (chip: string) => {
     if (!note) {
@@ -45,56 +45,65 @@ export default function CartItem({
   }
 
   return (
-    <div className="bg-surface p-3.5 rounded-lg flex flex-col gap-2.5 shadow-sm group border border-transparent hover:border-outline-variant/10 transition-colors">
-      <div className="flex gap-3">
-        <div className="relative w-11 h-11 rounded bg-surface-container-highest overflow-hidden flex-shrink-0 flex items-center justify-center">
+    <div className="bg-slate-50/70 p-3 rounded-xl flex flex-col gap-2.5 border border-slate-200/70 group hover:border-slate-300 transition-colors">
+      <div className="flex gap-3 items-center">
+        <div className="relative w-10 h-10 rounded-lg bg-white border border-slate-200/80 overflow-hidden flex-shrink-0 flex items-center justify-center">
           {imageUrl ? (
-            <Image src={imageUrl} alt={title} fill sizes="44px" className="object-cover" />
+            <Image src={imageUrl} alt={title} fill sizes="40px" className="object-cover" />
           ) : (
-            <span className="font-serif italic text-base text-outline-variant">T</span>
+            <span className="font-mono font-bold text-xs text-red-600">TC</span>
           )}
         </div>
-        
+
         <div className="flex-1 w-full overflow-hidden">
           <div className="flex justify-between items-start gap-2">
-            <h4 className="text-sm font-semibold font-body leading-tight truncate">{title}</h4>
-            <span className="font-mono text-sm font-bold shrink-0">{formattedPrice}</span>
+            <h4 className="text-xs lg:text-sm font-semibold text-slate-900 leading-tight truncate">
+              {title}
+            </h4>
+            <span className="font-mono text-xs lg:text-sm font-bold text-slate-900 shrink-0">
+              {formattedPrice}
+            </span>
           </div>
-          
-          <div className="flex items-center justify-between mt-1.5">
-            <div className="flex items-center gap-2.5">
-              <button 
+
+          <div className="flex items-center justify-between mt-2">
+            {/* Quantity Stepper */}
+            <div className="flex items-center gap-1.5">
+              <button
                 type="button"
-                onClick={() => onDecrement(id)} 
-                className="w-6 h-6 flex items-center justify-center rounded-full bg-surface-container-high text-primary active:scale-90 transition-transform"
+                onClick={() => onDecrement(id)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-red-400 hover:text-red-600 active:scale-95 transition-all shadow-2xs"
+                title="Kurang 1"
               >
                 <Minus className="w-3 h-3" />
               </button>
-              <span className="font-mono text-xs w-4 text-center font-bold">{quantity}</span>
-              <button 
+              <span className="font-mono text-xs w-6 text-center font-bold text-slate-900">
+                {quantity}
+              </span>
+              <button
                 type="button"
-                onClick={() => onIncrement(id)} 
-                className="w-6 h-6 flex items-center justify-center rounded-full bg-surface-container-high text-primary active:scale-90 transition-transform"
+                onClick={() => onIncrement(id)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-red-400 hover:text-red-600 active:scale-95 transition-all shadow-2xs"
+                title="Tambah 1"
               >
                 <Plus className="w-3 h-3" />
               </button>
             </div>
-            
+
             <div className="flex items-center gap-2">
               {hasNoteField && !isOpenNote && !note && (
                 <button
                   type="button"
                   onClick={() => setIsOpenNote(true)}
-                  className="text-[11px] font-mono text-primary flex items-center gap-1 hover:underline"
+                  className="text-[11px] font-mono text-red-600 flex items-center gap-1 hover:underline"
                 >
                   <StickyNote className="w-3 h-3" />
                   + Catatan
                 </button>
               )}
-              <button 
+              <button
                 type="button"
-                onClick={() => onRemove(id)} 
-                className="opacity-40 group-hover:opacity-100 text-error hover:text-red-700 transition-opacity p-0.5"
+                onClick={() => onRemove(id)}
+                className="text-slate-400 hover:text-red-600 transition-colors p-1"
                 title="Hapus item"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -105,10 +114,10 @@ export default function CartItem({
       </div>
 
       {hasNoteField && (isOpenNote || Boolean(note)) && (
-        <div className="bg-surface-container-low/70 p-2 rounded-md border border-outline-variant/10 text-xs">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-on-surface-variant font-bold flex items-center gap-1">
-              <StickyNote className="w-3 h-3 text-primary" />
+        <div className="bg-white p-2.5 rounded-lg border border-slate-200/90 text-xs shadow-2xs">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold flex items-center gap-1">
+              <StickyNote className="w-3 h-3 text-red-600" />
               Catatan Khusus
             </span>
             <button
@@ -117,7 +126,7 @@ export default function CartItem({
                 onUpdateNote(id, '')
                 setIsOpenNote(false)
               }}
-              className="text-on-surface-variant hover:text-error"
+              className="text-slate-400 hover:text-red-600"
               title="Hapus catatan"
             >
               <X className="w-3 h-3" />
@@ -126,19 +135,19 @@ export default function CartItem({
 
           <input
             type="text"
-            className="w-full bg-surface border border-outline-variant/20 rounded px-2 py-1 text-xs font-body focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-[11px]"
+            className="w-full bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1 text-xs focus:ring-1 focus:ring-red-500 focus:border-red-500 outline-none transition-all placeholder:text-slate-400"
             placeholder="Contoh: Es sedikit, pedas, pisah sambal..."
             value={note || ''}
             onChange={(e) => onUpdateNote(id, e.target.value)}
           />
 
-          <div className="flex flex-wrap gap-1 mt-1.5">
+          <div className="flex flex-wrap gap-1 mt-2">
             {QUICK_NOTES.map((chip) => (
               <button
                 key={chip}
                 type="button"
                 onClick={() => handleAddChip(chip)}
-                className="text-[10px] font-mono px-1.5 py-0.5 bg-surface rounded border border-outline-variant/20 hover:border-primary/40 hover:text-primary transition-colors text-on-surface-variant"
+                className="text-[10px] font-mono px-2 py-0.5 bg-slate-100 hover:bg-red-50 hover:text-red-600 hover:border-red-300 rounded-md border border-slate-200 text-slate-600 transition-colors"
               >
                 +{chip}
               </button>

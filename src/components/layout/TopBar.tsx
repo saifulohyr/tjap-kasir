@@ -203,39 +203,50 @@ export default function TopBar() {
     : '--:--'
 
   return (
-    <header className="flex justify-between items-center px-4 lg:px-8 py-3 lg:py-4 w-full bg-[#fff8ef] z-40 sticky top-0 border-b border-[#e3beb8]/15 gap-4">
+    <header className="flex justify-between items-center px-4 lg:px-8 py-3 w-full bg-white/95 backdrop-blur-md z-30 sticky top-0 border-b border-slate-200 gap-4 shadow-2xs">
       {/* ── Left Section ── */}
-      <div className="flex items-center gap-4 lg:gap-8 animate-fade-in min-w-0 flex-1">
+      <div className="flex items-center gap-3 lg:gap-6 animate-fade-in min-w-0 flex-1">
         {isPos ? (
-          <div className="flex items-center gap-2 lg:gap-4 shrink-0">
-            <h1 className="font-serif text-lg lg:text-2xl italic font-bold text-[#610000] tracking-tight">Tjap Chacoh</h1>
-            <div className="h-4 lg:h-6 w-[1px] bg-outline-variant/30 hidden sm:block"></div>
-            <h2 className="font-serif text-base lg:text-lg text-tertiary font-bold pl-1 lg:pl-0">Point of Sales</h2>
+          <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+            <h1 className="font-bold text-lg lg:text-xl text-red-600 tracking-tight flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+              Tjap Chacoh
+            </h1>
+            <div className="h-4 w-[1px] bg-slate-200 hidden sm:block"></div>
+            <h2 className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold pl-1 lg:pl-0">Point of Sales</h2>
           </div>
         ) : isInventory ? (
           <>
-            <div className="shrink-0">
-              <h1 className="font-serif text-lg lg:text-2xl italic font-bold text-[#610000] tracking-tight">Tjap Chacoh</h1>
-              <span className="font-mono text-[10px] uppercase text-on-surface-variant/40 tracking-widest">Master Inventory Ledger</span>
+            <div className="shrink-0 flex items-center gap-2">
+              <h1 className="font-bold text-lg lg:text-xl text-red-600 tracking-tight flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+                Tjap Chacoh
+              </h1>
+              <div className="h-4 w-[1px] bg-slate-200 hidden sm:block"></div>
+              <span className="font-mono text-[11px] uppercase text-slate-500 tracking-wider font-semibold">Master Inventory</span>
             </div>
           </>
         ) : isAnalytics ? (
           <>
-            <div className="flex items-center gap-2 lg:gap-4 shrink-0">
-              <h1 className="font-serif text-lg lg:text-2xl italic font-bold text-[#610000] tracking-tight">Tjap Chacoh</h1>
-              <div className="h-4 lg:h-6 w-[1px] bg-outline-variant/30 hidden sm:block"></div>
-              <h2 className="font-serif text-base lg:text-lg text-tertiary font-bold pl-1 lg:pl-0">Sales Analytics</h2>
+            <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+              <h1 className="font-bold text-lg lg:text-xl text-red-600 tracking-tight flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+                Tjap Chacoh
+              </h1>
+              <div className="h-4 w-[1px] bg-slate-200 hidden sm:block"></div>
+              <h2 className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold pl-1 lg:pl-0">Sales Analytics</h2>
             </div>
           </>
         ) : (
           <>
-            <h1 className="font-serif text-lg lg:text-2xl italic font-bold text-[#610000] whitespace-nowrap">
+            <h1 className="font-bold text-lg lg:text-xl text-red-600 tracking-tight flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
               Tjap Chacoh
             </h1>
-            <div className="h-6 w-[1px] bg-outline-variant/30 hidden sm:block"></div>
+            <div className="h-4 w-[1px] bg-slate-200 hidden sm:block"></div>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-error animate-pulse"></span>
-              <span className="font-mono text-[10px] lg:text-xs uppercase tracking-widest text-secondary whitespace-nowrap">
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+              <span className="font-mono text-[10px] lg:text-xs uppercase tracking-widest text-slate-600 font-semibold whitespace-nowrap">
                 Kitchen Live
               </span>
             </div>

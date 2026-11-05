@@ -2,56 +2,56 @@
 
 /*
  * ═══════════════════════════════════════════════
- *  TJAP CHACOH — Heritage Design System
- *  "Sejak Kemarin Sore"
+ *  TJAP CHACOH — Modern Casual Street POS
+ *  Crisp, High-Contrast, Touch-Friendly
  * ═══════════════════════════════════════════════
  */
 
 @theme {
-  /* ── Primary Palette ── */
-  --color-primary: #8B0000;
-  --color-primary-dark: #610000;
-  --color-primary-container: #FFD4D0;
-  --color-primary-hover: #A00000;
+  /* ── Primary Palette (Bold Logo Red) ── */
+  --color-primary: #DC2626;
+  --color-primary-dark: #B91C1C;
+  --color-primary-container: #FEE2E2;
+  --color-primary-hover: #EF4444;
   --color-on-primary: #FFFFFF;
-  --color-on-primary-container: #410000;
+  --color-on-primary-container: #991B1B;
 
-  /* ── Secondary Palette (Espresso Brown) ── */
-  --color-secondary: #3E2723;
-  --color-secondary-light: #5B403C;
-  --color-secondary-container: #FED7D0;
+  /* ── Secondary Palette (Logo Amber Cup) ── */
+  --color-secondary: #F59E0B;
+  --color-secondary-light: #FBBF24;
+  --color-secondary-container: #FEF3C7;
   --color-on-secondary: #FFFFFF;
-  --color-on-secondary-container: #795c57;
+  --color-on-secondary-container: #92400E;
 
-  /* ── Tertiary Palette (Deep Brown) ── */
-  --color-tertiary: #3B290C;
-  --color-tertiary-light: #584324;
-  --color-tertiary-container: #543F20;
+  /* ── Tertiary Palette (Dark Slate Text) ── */
+  --color-tertiary: #0F172A;
+  --color-tertiary-light: #1E293B;
+  --color-tertiary-container: #334155;
   --color-on-tertiary: #FFFFFF;
 
-  /* ── Surface / Background ── */
-  --color-surface: #FFF8EF;
-  --color-surface-dim: #E1D9CB;
-  --color-surface-bright: #FFF8EF;
+  /* ── Surface / Background (Clean Off-White / Slate) ── */
+  --color-surface: #F8FAFC;
+  --color-surface-dim: #F1F5F9;
+  --color-surface-bright: #FFFFFF;
   --color-surface-container-lowest: #FFFFFF;
-  --color-surface-container-low: #FBF3E4;
-  --color-surface-container: #F5EDDE;
-  --color-surface-container-high: #EFE7D9;
-  --color-surface-container-highest: #E9E2D3;
-  --color-background: #FDF5E6;
-  --color-on-surface: #1E1B13;
-  --color-on-surface-variant: #5A403C;
-  --color-inverse-surface: #343026;
-  --color-inverse-on-surface: #F8F0E1;
+  --color-surface-container-low: #F8FAFC;
+  --color-surface-container: #F1F5F9;
+  --color-surface-container-high: #FFFFFF;
+  --color-surface-container-highest: #E2E8F0;
+  --color-background: #F8FAFC;
+  --color-on-surface: #0F172A;
+  --color-on-surface-variant: #64748B;
+  --color-inverse-surface: #0F172A;
+  --color-inverse-on-surface: #F8FAFC;
 
   /* ── Accent / Border ── */
-  --color-accent: #D2B48C;
-  --color-outline: #8E706B;
-  --color-outline-variant: #E3BEB8;
+  --color-accent: #F59E0B;
+  --color-outline: #94A3B8;
+  --color-outline-variant: #E2E8F0;
 
   /* ── Error ── */
-  --color-error: #BA1A1A;
-  --color-error-container: #FFDAD6;
+  --color-error: #DC2626;
+  --color-error-container: #FEE2E2;
   --color-on-error: #FFFFFF;
 
   /* ── Font Families ── */
@@ -62,23 +62,23 @@
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 
   /* ── Border Radius ── */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
   --radius-full: 9999px;
 
   /* ── Shadows ── */
-  --shadow-card: 0 32px 64px rgba(62, 39, 35, 0.08);
-  --shadow-button: 0 4px 12px rgba(139, 0, 0, 0.2);
-  --shadow-elevated: 0 8px 32px rgba(62, 39, 35, 0.12);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --shadow-button: 0 4px 14px 0 rgba(220, 38, 38, 0.25);
+  --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 
   /* ── Animations ── */
   --animate-dot-in: dot-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   --animate-shake: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
-  --animate-fade-in: fade-in 0.6s ease-out forwards;
-  --animate-slide-up: slide-up 0.5s ease-out forwards;
+  --animate-fade-in: fade-in 0.3s ease-out forwards;
+  --animate-slide-up: slide-up 0.3s ease-out forwards;
   --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
   --animate-press: press 0.15s ease-out forwards;
 
@@ -99,7 +99,7 @@
   }
 
   @keyframes slide-up {
-    0% { opacity: 0; transform: translateY(20px); }
+    0% { opacity: 0; transform: translateY(12px); }
     100% { opacity: 1; transform: translateY(0); }
   }
 
@@ -110,7 +110,7 @@
 
   @keyframes press {
     0% { transform: scale(1); }
-    50% { transform: scale(0.95); }
+    50% { transform: scale(0.97); }
     100% { transform: scale(1); }
   }
 }
@@ -133,18 +133,7 @@ body {
   color: var(--color-on-primary-container);
 }
 
-/* ── Vintage Noise Texture Overlay ── */
-.vintage-overlay::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  pointer-events: none;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* ── Top Gradient Bar ── */
+/* ── Top Brand Bar ── */
 .heritage-bar {
   position: fixed;
   top: 0;
@@ -153,21 +142,21 @@ body {
   height: 3px;
   background: linear-gradient(
     to right,
-    var(--color-primary),
-    var(--color-primary-container),
-    var(--color-primary)
+    #DC2626,
+    #F59E0B,
+    #DC2626
   );
   z-index: 50;
 }
 
 /* ── Custom Utilities ── */
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: var(--color-surface-container-low); }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #F1F5F9; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
 
-.order-card-gradient { background: linear-gradient(135deg, #ffffff 0%, var(--color-surface-container-low) 100%); }
+.order-card-gradient { background: #FFFFFF; }
 
-.varnish-cta { background: linear-gradient(135deg, #610000 0%, #8b0000 100%); }
+.varnish-cta { background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%); }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -176,10 +165,9 @@ body {
 @media print {
   @page {
     margin: 0;
-    size: 58mm auto; /* Custom width for 58mm thermal rolls */
+    size: 58mm auto;
   }
 
-  /* Hide EVERYTHING on the page */
   html, body {
     background: white !important;
     color: black !important;
@@ -190,7 +178,6 @@ body {
     print-color-adjust: exact;
   }
 
-  /* Hide all direct children of body EXCEPT the receipt */
   body > *:not(.receipt-print-area) {
     display: none !important;
   }
@@ -207,7 +194,6 @@ body {
     page-break-after: auto;
   }
 
-  /* Ensure receipt logo prints */
   .receipt-print-area .receipt-logo {
     visibility: visible !important;
     filter: grayscale(1) !important;

@@ -20,19 +20,78 @@ export default function Sidebar() {
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
   ]
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } finally {
+      window.location.href = '/'
+    }
+  }
+
   return (
-    <aside className="fixed left-0 top-0 h-full flex flex-col py-6 z-50 bg-[#fbf3e4] w-16 xl:w-64 shadow-[4px_0_24px_rgba(62,39,35,0.05)] border-r border-[#e3beb8]/15 transition-all duration-300">
-      {/* Brand / Profile */}
-      <div className="px-3 xl:px-6 mb-8">
-        <h1 className="font-serif text-xl xl:text-2xl italic font-bold text-[#610000] text-center xl:text-left truncate">
-          <span className="xl:hidden">TC</span>
-          <span className="hidden xl:inline">Tjap Chacoh</span>
-        </h1>
+    <>
+      {/* ── Desktop & Tablet Sidebar (Left) ── */}
+      <aside className="hidden md:flex fixed left-0 top-0 h-full flex-col py-6 z-50 bg-white w-16 xl:w-64 border-r border-slate-200 shadow-sm transition-all duration-300">
+        {/* Brand */}
+        <div className="px-3 xl:px-6 mb-8">
+          <div className="flex items-center gap-3 justify-center xl:justify-start">
+            <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold font-mono text-sm shadow-sm shrink-0">
+              TC
+            </div>
+            <div className="hidden xl:block min-w-0">
+              <h1 className="font-bold text-base text-slate-900 tracking-tight leading-tight truncate">
+                Tjap Chacoh
+              </h1>
+              <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                POS & Kitchen
+              </p>
+            </div>
+          </div>
+        </div>
 
-      </div>
+        {/* Navigation Tabs */}
+        <nav className="flex-1 space-y-1 px-2">
+          {tabs.map((tab) => {
+            const isActive = pathname === tab.href
+            const Icon = tab.icon
 
-      {/* Navigation Tabs */}
-      <nav className="flex-1 space-y-1 px-1 xl:px-2">
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                title={tab.label}
+                className={`flex items-center gap-3 px-3 xl:px-4 py-3 rounded-xl transition-all group justify-center xl:justify-start ${
+                  isActive
+                    ? 'bg-red-50 text-red-600 font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-red-600' : 'text-slate-500 group-hover:text-slate-900'}`} />
+                <span className="font-mono text-xs uppercase tracking-wider hidden xl:inline">
+                  {tab.label}
+                </span>
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Bottom Logout */}
+        <div className="px-2 xl:px-4 mt-auto">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 xl:px-4 py-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all group justify-center xl:justify-start"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            <span className="font-mono text-xs uppercase tracking-wider hidden xl:inline">
+              Logout
+            </span>
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Mobile Bottom Navigation Bar ── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 flex items-center justify-around px-2 shadow-lg">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href
           const Icon = tab.icon
@@ -41,38 +100,33 @@ export default function Sidebar() {
             <Link
               key={tab.href}
               href={tab.href}
-              title={tab.label}
-              className={`flex items-center gap-3 px-3 xl:px-4 py-3 rounded-lg transition-all group justify-center xl:justify-start ${
-                isActive
-                  ? 'bg-white text-[#8B0000] shadow-sm xl:translate-x-1'
-                  : 'text-[#3b290c] opacity-60 hover:opacity-100 hover:bg-[#fff8ef]'
+              className={`flex flex-col items-center justify-center flex-1 py-1.5 transition-colors ${
+                isActive ? 'text-red-600 font-bold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <Icon className="w-5 h-5 shrink-0" />
-              <span className={`font-mono text-xs uppercase tracking-wider hidden xl:inline ${isActive ? 'font-bold' : ''}`}>
+              <div className={`p-1 rounded-lg ${isActive ? 'bg-red-50' : ''}`}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-mono tracking-wider mt-0.5">
                 {tab.label}
               </span>
             </Link>
           )
         })}
-      </nav>
 
-      {/* Bottom Actions */}
-      <div className="px-2 xl:px-4 mt-auto">
         <button
-          onClick={async () => {
-            try {
-              await fetch('/api/auth/logout', { method: 'POST' })
-            } finally {
-              window.location.href = '/'
-            }
-          }}
-          className="w-full flex items-center gap-3 px-3 xl:px-4 py-3 mt-4 text-[#3b290c] opacity-60 hover:opacity-100 hover:bg-[#fff8ef] rounded-lg transition-all group justify-center xl:justify-start"
+          onClick={handleLogout}
+          className="flex flex-col items-center justify-center flex-1 py-1.5 text-slate-400 hover:text-red-600 transition-colors"
+          title="Logout"
         >
-          <LogOut className="w-5 h-5 shrink-0 group-hover:text-primary transition-colors" />
-          <span className="font-mono text-xs uppercase tracking-wider group-hover:text-primary transition-colors hidden xl:inline">Logout</span>
+          <div className="p-1">
+            <LogOut className="w-5 h-5" />
+          </div>
+          <span className="text-[10px] font-mono tracking-wider mt-0.5">
+            Exit
+          </span>
         </button>
-      </div>
-    </aside>
+      </nav>
+    </>
   )
 }
