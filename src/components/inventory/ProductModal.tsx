@@ -2,7 +2,6 @@
 
 import { X, Save, Box, Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
 import { Product } from '@/types/database.types'
 
 interface ProductModalProps {
@@ -79,13 +78,14 @@ export default function ProductModal({ isOpen, onClose, onSuccess, product }: Pr
         image_url: formData.image_url || null
       }
 
-      if (isEdit && product) {
-        const { error } = await supabase.from('products').update(payload).eq('id', product.id)
-        if (error) throw error
-      } else {
-        const { error } = await supabase.from('products').insert([payload])
-        if (error) throw error
-      }
+      const res = await fetch('/api/products', {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(isEdit && product ? { ...payload, id: product.id } : payload)
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to save product')
 
       onSuccess()
       onClose()

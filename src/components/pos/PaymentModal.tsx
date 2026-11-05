@@ -3,10 +3,10 @@
 import { Banknote, X, Delete, CheckCircle2, Loader2, Printer, QrCode } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useCartStore } from '@/store/useCartStore'
-import { supabase } from '@/lib/supabase'
 import { ReceiptData } from './PrintReceipt'
 import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter'
 import { generateEscPosReceipt } from '@/utils/escpos'
+import { saveOfflineTransaction } from '@/utils/offlineSync'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -81,50 +81,25 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady, btHook }
 
     setIsProcessing(true)
     try {
-      const ticketNumber = `TX-${Math.floor(10000 + Math.random() * 90000)}`
-      
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const { count } = await supabase
-        .from('transactions')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', today.toISOString())
-        
-      const dailySequence = (count ?? 0) + 1
-      
-      const { data: txn, error } = await supabase.from('transactions').insert({
-        ticket_number: ticketNumber,
-        total_amount: total,
-        payment_method: paymentMethod,
-        status: 'Completed',
-        order_type: orderType,
-        customer_name: customerName || null,
-        cashier_name: cashierName || 'Kasir'
-      }).select().single()
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart,
+          total,
+          paymentMethod,
+          orderType,
+          customerName: customerName || null,
+          cashierName: cashierName || 'Kasir'
+        })
+      })
 
-      if (error) throw error
-
-      if (txn) {
-        const items = cart.map(item => ({
-          transaction_id: txn.id,
-          product_id: item.id,
-          title: item.title,
-          quantity: item.quantity,
-          price_at_time: item.price,
-          note: item.note ?? null
-        }))
-
-        const { error: itemsError } = await supabase.from('transaction_items').insert(items)
-        if (itemsError) throw itemsError
-
-        // Deduct stock natively
-        for (const item of cart) {
-          const { data: prod } = await supabase.from('products').select('stock').eq('id', item.id).single()
-          if (prod) {
-            await supabase.from('products').update({ stock: Math.max(0, prod.stock - item.quantity) }).eq('id', item.id)
-          }
-        }
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Checkout failed')
       }
+
+      const { ticketNumber, dailySequence } = data
 
       // Snapshot receipt data BEFORE clearing cart, and send to parent
       const receiptSnapshot: ReceiptData = {
@@ -148,9 +123,49 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady, btHook }
 
       clearCart()
       setIsSuccess(true)
-    } catch (e) {
+    } catch (e: unknown) {
       console.error(e)
-      alert("Transaction Error: Verify database connectivity or RLS permissions.")
+      
+      // Offline fallback: if network is down, queue transaction locally
+      const isNetworkDown = typeof window !== 'undefined' && (!window.navigator.onLine || (e instanceof TypeError && e.message.includes('fetch')))
+      if (isNetworkDown) {
+        const offlineTicket = `TX-OFF-${Math.floor(1000 + Math.random() * 9000)}`
+        saveOfflineTransaction({
+          items: cart,
+          total,
+          paymentMethod,
+          orderType: orderType || 'Dine In',
+          customerName: customerName || null,
+          cashierName: cashierName || 'Kasir',
+          ticketNumber: offlineTicket
+        })
+
+        const receiptSnapshot: ReceiptData = {
+          ticketNumber: offlineTicket,
+          items: cart.map(i => ({ title: i.title, quantity: i.quantity, price: i.price })),
+          total,
+          cashReceived,
+          changeDue,
+          date: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) + ' (OFFLINE)',
+          cashierName: cashierName || 'Shift Active',
+          customerName: customerName || undefined,
+          paymentMethod,
+          orderType,
+          dailySequence: 0
+        }
+
+        onReceiptReady(receiptSnapshot)
+        setLastReceipt(receiptSnapshot)
+        setChangeDueSnapshot(changeDue)
+
+        clearCart()
+        setIsSuccess(true)
+        alert("MODE OFFLINE:\nKoneksi internet tidak tersedia. Transaksi berhasil disimpan di perangkat lokal dan struk siap dicetak. Transaksi akan otomatis tersinkronisasi ke server saat online.")
+        return
+      }
+
+      const msg = e instanceof Error ? e.message : 'Unknown error'
+      alert(`Transaction Error: ${msg}`)
     } finally {
       setIsProcessing(false)
     }

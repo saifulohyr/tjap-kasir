@@ -122,7 +122,7 @@ export const generateEscPosReceipt = (data: ReceiptData, storeName: string, addr
   addLine()
   addLine('FREE WIFI')
   addLine('SSID: WIFIOJI')
-  addLine('PASS: CACA1968')
+  addLine('PASS: hilman123')
   
   // Feed paper (push out of printer)
   addLine()

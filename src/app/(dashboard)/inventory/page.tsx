@@ -3,7 +3,6 @@
 import Image from "next/image"
 import { Edit, Trash2, Plus, Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
 import { Product } from "@/types/database.types"
 import ProductModal from "@/components/inventory/ProductModal"
 import { useSearchStore } from "@/store/useSearchStore"
@@ -18,11 +17,9 @@ export default function InventoryPage() {
   const fetchProducts = async () => {
     setIsLoading(true)
     try {
-      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false })
-      if (error) {
-        console.error("Failed fetching products:", error)
-      }
-      if (data) {
+      const res = await fetch('/api/products')
+      const data = await res.json()
+      if (Array.isArray(data)) {
         setProducts(data as Product[])
       }
     } catch (err) {
@@ -52,14 +49,14 @@ export default function InventoryPage() {
     }
 
     try {
-      const { error } = await supabase.from('products').delete().eq('id', prod.id)
+      const res = await fetch(`/api/products?id=${prod.id}`, { method: 'DELETE' })
+      const data = await res.json()
       
-      if (error) {
-        // Handle PostgREST foreign key violation (23503)
-        if (error.code === '23503') {
+      if (!res.ok) {
+        if (data.code === '23503' || (data.error && data.error.includes('foreign key'))) {
           alert(`LOCKED: Cannot delete ${prod.title} because it has transaction history.\n\nPlease EDIT the product and set stock to 0 instead.`)
         } else {
-          throw error
+          throw new Error(data.error || 'Delete failed')
         }
       } else {
         alert(`${prod.title} deleted successfully.`)

@@ -7,8 +7,6 @@ import PinDot from '@/components/login/PinDot'
 import NumpadButton from '@/components/login/NumpadButton'
 
 const PIN_LENGTH = 4
-// TODO: Replace with Supabase staff table lookup (hashed PIN)
-const VALID_PIN = '8691'
 
 const NUMPAD_KEYS = [
   { digit: '1', letters: '' },
@@ -50,23 +48,30 @@ export default function LoginPage() {
     setIsAuthenticating(true)
     setError(null)
 
-    // Simulate network delay for realism
-    await new Promise((resolve) => setTimeout(resolve, 600))
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin })
+      })
 
-    if (pin === VALID_PIN) {
-      // Set session cookie for 1 day
-      document.cookie = "tjap_auth=true; path=/; max-age=86400; SameSite=Lax"
-      router.push('/pos')
-    } else {
-      setShake(true)
-      setError('PIN salah. Silakan coba lagi.')
-      setTimeout(() => {
-        setShake(false)
-        setPin('')
-      }, 600)
+      const data = await res.json()
+
+      if (res.ok && data.success) {
+        router.push('/pos')
+      } else {
+        setShake(true)
+        setError(data.error || 'PIN salah. Silakan coba lagi.')
+        setTimeout(() => {
+          setShake(false)
+          setPin('')
+        }, 600)
+      }
+    } catch {
+      setError('Koneksi bermasalah. Silakan coba lagi.')
+    } finally {
+      setIsAuthenticating(false)
     }
-
-    setIsAuthenticating(false)
   }, [pin, isAuthenticating, router])
 
   // Handle keyboard input

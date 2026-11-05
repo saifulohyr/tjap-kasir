@@ -1,12 +1,12 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Calendar, Clock, Search, Download, Loader2 } from 'lucide-react'
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { Calendar, Clock, Search, Download, Loader2, Wifi, WifiOff, RefreshCw } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
 import ExcelJS from 'exceljs'
 import { useSearchStore } from '@/store/useSearchStore'
 import { useAnalyticsStore } from '@/store/useAnalyticsStore'
+import { getOfflineQueue, syncOfflineQueue } from '@/utils/offlineSync'
 
 export default function TopBar() {
   const pathname = usePathname()
@@ -17,6 +17,50 @@ export default function TopBar() {
   const [mounted, setMounted] = useState(false)
   const [now, setNow] = useState(new Date())
   const [isExporting, setIsExporting] = useState(false)
+  const [isOnline, setIsOnline] = useState(true)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [isSyncing, setIsSyncing] = useState(false)
+
+  const updateOfflineStatus = useCallback(() => {
+    if (typeof window === 'undefined') return
+    setIsOnline(window.navigator.onLine)
+    setPendingCount(getOfflineQueue().length)
+  }, [])
+
+  const handleSyncOffline = async () => {
+    if (isSyncing || !window.navigator.onLine) return
+    setIsSyncing(true)
+    try {
+      const result = await syncOfflineQueue()
+      if (result.synced > 0) {
+        alert(`Berhasil menyinkronkan ${result.synced} transaksi offline ke database Neon!`)
+      }
+    } catch (err) {
+      console.error("Failed syncing offline queue", err)
+    } finally {
+      setIsSyncing(false)
+      updateOfflineStatus()
+    }
+  }
+
+  useEffect(() => {
+    updateOfflineStatus()
+    const handleOnline = () => {
+      updateOfflineStatus()
+      handleSyncOffline()
+    }
+    const handleOffline = () => updateOfflineStatus()
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('offline-queue-changed', updateOfflineStatus)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('offline-queue-changed', updateOfflineStatus)
+    }
+  }, [updateOfflineStatus])
 
   const inventorySearch = useSearchStore((state) => state.inventorySearch)
   const selectedDate = useAnalyticsStore((state) => state.selectedDate)
@@ -25,24 +69,10 @@ export default function TopBar() {
     setIsExporting(true)
     try {
       const selectedDate = useAnalyticsStore.getState().selectedDate
-      const start = new Date(selectedDate)
-      start.setHours(0, 0, 0, 0)
-      const end = new Date(selectedDate)
-      end.setHours(23, 59, 59, 999)
+      const res = await fetch(`/api/export?date=${selectedDate}`)
+      const items = await res.json()
 
-      // Fetch all items from selected date
-      const { data: items, error } = await supabase
-        .from('transaction_items')
-        .select(`
-          *,
-          transactions ( ticket_number, created_at ),
-          products ( category )
-        `)
-        .gte('created_at', start.toISOString())
-        .lte('created_at', end.toISOString())
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
+      if (!res.ok) throw new Error(items.error || 'Failed to export')
 
       if (!items || items.length === 0) {
         alert("Tidak ada data penjualan untuk tanggal ini.")
@@ -65,8 +95,21 @@ export default function TopBar() {
       titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8B0000' } }
 
       // Analytics Summary
-      const totalRevenue = items.reduce((sum, item) => sum + (item.quantity * item.price_at_time), 0)
-      const totalTxns = new Set(items.map(i => i.transaction_id)).size
+      interface ExportItem {
+        id: string
+        title: string
+        quantity: number
+        price_at_time: number
+        created_at: string
+        transaction_id: string
+        ticket_number: string | null
+        txn_created_at: string | null
+        category: string | null
+      }
+      const typedItems = items as ExportItem[]
+
+      const totalRevenue = typedItems.reduce((sum: number, item: ExportItem) => sum + (item.quantity * item.price_at_time), 0)
+      const totalTxns = new Set(typedItems.map((i: ExportItem) => i.transaction_id)).size
       
       sheet.addRow([])
       sheet.addRow(['Performance metrics:', ''])
@@ -74,7 +117,7 @@ export default function TopBar() {
       
       sheet.addRow(['Total Revenue:', `Rp ${totalRevenue.toLocaleString('id-ID')}`])
       sheet.addRow(['Total Transactions:', totalTxns])
-      sheet.addRow(['Items Sold:', items.reduce((sum, i) => sum + i.quantity, 0)])
+      sheet.addRow(['Items Sold:', typedItems.reduce((sum: number, i: ExportItem) => sum + i.quantity, 0)])
       sheet.getCell('A6').font = { bold: true }; sheet.getCell('B6').font = { bold: true, color: { argb: 'FF8B0000'} }
       sheet.getCell('A7').font = { bold: true }
       sheet.getCell('A8').font = { bold: true }
@@ -91,15 +134,13 @@ export default function TopBar() {
       })
 
       // Add Data Rows
-      items.forEach(idx => {
-        const t = idx.transactions as { ticket_number: string, created_at: string } | null
-        const p = idx.products as { category?: string } | null
-        const timeStr = t ? new Date(t.created_at).toLocaleTimeString('en-GB') : '-'
+      typedItems.forEach((idx: ExportItem) => {
+        const timeStr = idx.txn_created_at ? new Date(idx.txn_created_at).toLocaleTimeString('en-GB') : '-'
         
         const row = sheet.addRow([
           timeStr,
-          t?.ticket_number || '-',
-          p?.category || '-',
+          idx.ticket_number || '-',
+          idx.category || '-',
           idx.title,
           idx.quantity,
           idx.price_at_time,
@@ -203,7 +244,33 @@ export default function TopBar() {
       </div>
 
       {/* ── Right Section ── */}
-      <div className="flex items-center gap-4 lg:gap-6 animate-fade-in shrink-0" style={{ animationDelay: '100ms' }}>
+      <div className="flex items-center gap-3 lg:gap-5 animate-fade-in shrink-0" style={{ animationDelay: '100ms' }}>
+        {/* Offline & Sync Status Indicator */}
+        <div className="flex items-center gap-2">
+          {!isOnline ? (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error/15 border border-error/30 text-error font-mono text-[10px] font-bold">
+              <WifiOff className="w-3 h-3" />
+              <span>OFFLINE</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#2d5a27]/10 border border-[#2d5a27]/20 text-[#2d5a27] font-mono text-[10px] font-bold hidden sm:flex">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2d5a27] animate-pulse" />
+              <span>ONLINE</span>
+            </div>
+          )}
+
+          {pendingCount > 0 && (
+            <button
+              onClick={handleSyncOffline}
+              disabled={isSyncing || !isOnline}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 font-mono text-[10px] font-bold hover:bg-amber-500/25 transition-all"
+              title="Klik untuk menyinkronkan data offline"
+            >
+              <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : `Sync (${pendingCount})`}</span>
+            </button>
+          )}
+        </div>
         {isPos ? (
           <div className="flex items-center gap-4 lg:gap-6">
             <div className="flex items-center gap-2 text-tertiary">

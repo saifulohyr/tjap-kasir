@@ -1,8 +1,7 @@
 'use client'
 
 import { CircleDollarSign, Receipt, Utensils, TrendingUp, Timer, Loader2 } from "lucide-react"
-import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
+import { useEffect, useState, useCallback } from "react"
 import { useAnalyticsStore } from "@/store/useAnalyticsStore"
 
 interface TopItem {
@@ -18,6 +17,7 @@ interface RecentTxn {
   ticket_number: string
   type: string
   amount: number
+  status: string
 }
 
 export default function AnalyticsPage() {
@@ -34,86 +34,89 @@ export default function AnalyticsPage() {
   const isToday = selectedDate === new Date().toLocaleDateString('en-CA')
   const dateLabel = isToday ? 'Today' : selectedDate
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      if (!selectedDate) return
-      setIsLoading(true)
-      try {
-        const start = new Date(selectedDate)
-        start.setHours(0, 0, 0, 0)
-        
-        const end = new Date(selectedDate)
-        end.setHours(23, 59, 59, 999)
+  const fetchAnalytics = useCallback(async () => {
+    if (!selectedDate) return
+    setIsLoading(true)
+    try {
+      const res = await fetch(`/api/analytics?date=${selectedDate}`)
+      const data = await res.json()
+      const txns = data.txns || []
+      const items = data.items || []
 
-        // Fetch day's transactions
-        const { data: txns } = await supabase
-          .from('transactions')
-          .select('*')
-          .gte('created_at', start.toISOString())
-          .lte('created_at', end.toISOString())
-          .order('created_at', { ascending: false })
+      const validTxns = txns.filter((t: { status: string }) => t.status !== 'Void')
+      setTxnCnt(validTxns.length)
+      setRevenue(validTxns.reduce((sum: number, t: { total_amount: number | string }) => sum + Number(t.total_amount), 0))
+      setRevenueCash(validTxns.filter((t: { payment_method: string }) => t.payment_method === 'Cash').reduce((sum: number, t: { total_amount: number | string }) => sum + Number(t.total_amount), 0))
+      setRevenueQris(validTxns.filter((t: { payment_method: string }) => t.payment_method === 'QRIS').reduce((sum: number, t: { total_amount: number | string }) => sum + Number(t.total_amount), 0))
+      setRecentTxns(txns.slice(0, 10).map((t: { id: string; ticket_number: string; order_type: string; total_amount: number | string; status: string }) => ({
+        id: t.id,
+        ticket_number: t.ticket_number,
+        type: t.order_type,
+        amount: Number(t.total_amount),
+        status: t.status
+      })))
 
-        // Fetch day's transaction items linked to products
-        const { data: items } = await supabase
-          .from('transaction_items')
-          .select(`
-            *,
-            products (
-              category
-            )
-          `)
-          .gte('created_at', start.toISOString())
-          .lte('created_at', end.toISOString())
-
-        if (txns) {
-          setTxnCnt(txns.length)
-          setRevenue(txns.reduce((sum, t) => sum + Number(t.total_amount), 0))
-          setRevenueCash(txns.filter(t => t.payment_method === 'Cash').reduce((sum, t) => sum + Number(t.total_amount), 0))
-          setRevenueQris(txns.filter(t => t.payment_method === 'QRIS').reduce((sum, t) => sum + Number(t.total_amount), 0))
-          setRecentTxns(txns.slice(0, 5).map((t) => ({
-            id: t.id,
-            ticket_number: t.ticket_number,
-            type: t.order_type, // Using actual data from DB
-            amount: Number(t.total_amount)
-          })))
-        }
-
-        if (items) {
-          const itemMap: Record<string, TopItem> = {}
-          items.forEach(item => {
-            const pid = item.product_id || 'unknown'
-            if (!itemMap[pid]) {
-              itemMap[pid] = {
-                id: pid,
-                title: item.title,
-                category: (item.products as { category?: string } | null)?.category || 'MIXED',
-                qty: 0,
-                revenue: 0
-              }
+      if (items) {
+        const itemMap: Record<string, TopItem> = {}
+        items.forEach((item: { product_id?: string; title: string; category?: string; quantity: number; price_at_time: number | string }) => {
+          const pid = item.product_id || 'unknown'
+          if (!itemMap[pid]) {
+            itemMap[pid] = {
+              id: pid,
+              title: item.title,
+              category: item.category || 'MIXED',
+              qty: 0,
+              revenue: 0
             }
-            itemMap[pid].qty += item.quantity
-            itemMap[pid].revenue += (item.quantity * Number(item.price_at_time))
-          })
-
-          const sortedItems = Object.values(itemMap).sort((a, b) => b.qty - a.qty)
-          setTopItems(sortedItems)
-          
-          if (sortedItems.length > 0) {
-            setBestSeller({
-              title: sortedItems[0].title,
-              category: sortedItems[0].category,
-              qty: sortedItems[0].qty
-            })
           }
+          itemMap[pid].qty += item.quantity
+          itemMap[pid].revenue += (item.quantity * Number(item.price_at_time))
+        })
+
+        const sortedItems = Object.values(itemMap).sort((a, b) => b.qty - a.qty)
+        setTopItems(sortedItems)
+        
+        if (sortedItems.length > 0) {
+          setBestSeller({
+            title: sortedItems[0].title,
+            category: sortedItems[0].category,
+            qty: sortedItems[0].qty
+          })
         }
-      } catch (err) {
-        console.error("Aggregation error:", err)
-      } finally {
-        setIsLoading(false)
       }
+    } catch (err) {
+      console.error("Aggregation error:", err)
+    } finally {
+      setIsLoading(false)
     }
-    fetchAnalytics()
   }, [selectedDate])
+
+  useEffect(() => {
+    fetchAnalytics()
+  }, [fetchAnalytics])
+
+  const handleVoid = async (id: string, ticketNumber: string) => {
+    if (!confirm(`Batalkan transaksi ${ticketNumber}?\n\nStatus transaksi akan diubah menjadi 'Void' dan stok seluruh produk di dalamnya akan dikembalikan otomatis ke inventori.`)) {
+      return
+    }
+
+    try {
+      const res = await fetch('/api/transactions/void', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId: id })
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Gagal membatalkan transaksi')
+
+      alert(data.message || 'Transaksi berhasil dibatalkan.')
+      fetchAnalytics()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error'
+      alert(`Gagal: ${msg}`)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -239,12 +242,35 @@ export default function AnalyticsPage() {
               <p className="font-mono text-xs text-on-surface-variant italic opacity-60">No transactions recorded yet.</p>
             ) : (
               recentTxns.map((txn) => (
-                <div key={txn.id} className="flex justify-between items-center pb-4 border-b border-outline-variant/20 last:border-0 last:pb-0">
-                  <div>
-                    <p className="font-mono text-xs text-on-surface-variant">{txn.ticket_number}</p>
-                    <p className="font-body text-sm font-semibold text-on-surface mt-1">{txn.type}</p>
+                <div key={txn.id} className="flex justify-between items-center pb-4 border-b border-outline-variant/20 last:border-0 last:pb-0 gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-mono text-xs text-on-surface-variant">{txn.ticket_number}</p>
+                      {txn.status === 'Void' ? (
+                        <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded bg-error/10 text-error font-bold">
+                          VOID
+                        </span>
+                      ) : (
+                        <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded bg-[#2d5a27]/10 text-[#2d5a27] font-bold">
+                          PAID
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-body text-sm font-semibold text-on-surface mt-1 truncate">{txn.type}</p>
                   </div>
-                  <p className="font-mono text-sm font-bold text-primary">Rp {(txn.amount/1000).toFixed(0)}k</p>
+                  <div className="text-right flex flex-col items-end shrink-0">
+                    <p className={`font-mono text-sm font-bold ${txn.status === 'Void' ? 'line-through text-on-surface-variant/40' : 'text-primary'}`}>
+                      Rp {(txn.amount/1000).toFixed(0)}k
+                    </p>
+                    {txn.status !== 'Void' && (
+                      <button
+                        onClick={() => handleVoid(txn.id, txn.ticket_number)}
+                        className="font-mono text-[10px] text-error hover:underline mt-1 uppercase tracking-wider font-bold"
+                      >
+                        Void
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))
             )}

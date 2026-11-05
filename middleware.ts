@@ -1,26 +1,41 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { verifyAuthToken } from '@/lib/auth'
 
-export function middleware(request: NextRequest) {
-  const authCookie = request.cookies.get('tjap_auth')
+export async function middleware(request: NextRequest) {
+  const authCookie = request.cookies.get('tjap_auth')?.value
   const { pathname } = request.nextUrl
 
-  // 1. If no cookie and trying to access dashboard routes -> Redirect to root (Login)
-  if (!authCookie && pathname !== '/') {
+  // Allow login endpoint and public static assets
+  if (pathname.startsWith('/api/auth/login')) {
+    return NextResponse.next()
+  }
+
+  const isValid = authCookie ? await verifyAuthToken(authCookie) : false
+
+  // 1. API routes protection (except auth login)
+  if (pathname.startsWith('/api/')) {
+    if (!isValid) {
+      return NextResponse.json({ error: 'Unauthorized: Session invalid or expired' }, { status: 401 })
+    }
+    return NextResponse.next()
+  }
+
+  // 2. Unauthenticated user accessing dashboard routes -> redirect to root (Login)
+  if (!isValid && pathname !== '/') {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // 2. If already logged in and trying to access root (Login) -> Redirect to POS
-  if (authCookie && pathname === '/') {
+  // 3. Authenticated user accessing root (Login) -> redirect to POS
+  if (isValid && pathname === '/') {
     return NextResponse.redirect(new URL('/pos', request.url))
   }
 
   return NextResponse.next()
 }
 
-// Ensure middleware doesn't run on static files or API routes
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|icon.jpg).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icon.jpg|manifest.webmanifest).*)',
   ],
 }

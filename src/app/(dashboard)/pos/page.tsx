@@ -8,8 +8,8 @@ import SavedDraftsModal from '@/components/pos/SavedDraftsModal'
 import PrintReceipt, { ReceiptData } from '@/components/pos/PrintReceipt'
 import { useState, useEffect, useCallback } from 'react'
 import { useCartStore } from '@/store/useCartStore'
-import { supabase } from '@/lib/supabase'
 import { Product } from '@/types/database.types'
+import { cacheProducts, getCachedProducts } from '@/utils/offlineSync'
 import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter'
 import { generateEscPosReceipt } from '@/utils/escpos'
 
@@ -43,17 +43,24 @@ export default function PosPage() {
   const { cart, drafts, addToCart, removeFromCart, updateQuantity, updateNote, getSubtotal, clearCart, saveDraft, orderType, setOrderType } = useCartStore()
 
   useEffect(() => {
+    // 1. Initial hydrate from offline cache if available
+    const cached = getCachedProducts()
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      setProducts(cached as Product[])
+      setIsLoading(false)
+    }
+
+    // 2. Fetch fresh from server
     const fetchProducts = async () => {
       try {
-        const { data, error } = await supabase.from('products').select('*')
-        if (error) {
-          console.error("Failed fetching products:", error)
-        }
-        if (data) {
+        const res = await fetch('/api/products')
+        const data = await res.json()
+        if (Array.isArray(data)) {
           setProducts(data as Product[])
+          cacheProducts(data)
         }
       } catch (err) {
-        console.error("Failed fetching products", err)
+        console.warn("Failed fetching products from network, falling back to cache", err)
       } finally {
         setIsLoading(false)
       }

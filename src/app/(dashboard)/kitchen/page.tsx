@@ -2,7 +2,6 @@
 
 import { MoreVertical, CheckCircle2, Loader2, Clock, Printer, Square, SquareCheckBig } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
 import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter'
 import { generateEscPosReceipt } from '@/utils/escpos'
 import PrintReceipt, { ReceiptData } from '@/components/pos/PrintReceipt'
@@ -40,55 +39,46 @@ export default function KitchenDashboard() {
   // ── Per-item checklist (Zustand — persists across navigation) ──
   const { itemChecks, toggleItemCheck, clearOrderChecks, isItemChecked, getCheckedCount, allItemsDone } = useKitchenStore()
 
-  const fetchOrders = async () => {
-    // Only fetch today's orders to avoid massive payload
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    const { data, error } = await supabase
-      .from('transactions')
-      .select(`
-        id, ticket_number, order_type, created_at, kitchen_status,
-        customer_name, cashier_name, total_amount, payment_method,
-        transaction_items ( id, title, quantity, note, price_at_time )
-      `)
-      .gte('created_at', today.toISOString())
-      .in('status', ['Completed']) // Only paid ones
-      .order('created_at', { ascending: true }) // Oldest first
-      
-    if (error) {
+  const fetchOrders = async (silent = false) => {
+    if (!silent) setIsLoading(true)
+    try {
+      const res = await fetch('/api/kitchen')
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        setOrders(data as unknown as Order[])
+      }
+    } catch (error) {
       console.error("Error fetching orders:", error)
+    } finally {
+      setLastSync(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+      if (!silent) setIsLoading(false)
     }
-    if (data) {
-      setOrders(data as unknown as Order[])
-    }
-    setLastSync(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
-    setIsLoading(false)
   }
 
   useEffect(() => {
     // initial fetch
-    // eslint-disable-next-line
     fetchOrders()
 
-    const channel = supabase.channel('kitchen-updates')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'transactions' },
-        () => {
-          fetchOrders()
-        }
-      )
-      .subscribe()
+    // Neon polling every 4 seconds to sync kitchen display automatically
+    const interval = setInterval(() => {
+      fetchOrders(true)
+    }, 4000)
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return () => clearInterval(interval)
   }, [])
 
   const updateKitchenStatus = async (id: string, status: 'cooking' | 'completed') => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, kitchen_status: status } : o))
-    await supabase.from('transactions').update({ kitchen_status: status }).eq('id', id)
+    try {
+      await fetch('/api/kitchen', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      })
+    } catch (e) {
+      console.error("Failed updating kitchen status", e)
+      fetchOrders(true)
+    }
   }
 
   const ordersWithSequence = orders.map((o, idx) => ({ ...o, dailySequence: idx + 1 }))

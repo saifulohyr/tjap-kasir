@@ -60,9 +60,12 @@ export default function Sidebar() {
       {/* Bottom Actions */}
       <div className="px-2 xl:px-4 mt-auto">
         <button
-          onClick={() => {
-            document.cookie = "tjap_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
-            window.location.href = '/login'
+          onClick={async () => {
+            try {
+              await fetch('/api/auth/logout', { method: 'POST' })
+            } finally {
+              window.location.href = '/'
+            }
           }}
           className="w-full flex items-center gap-3 px-3 xl:px-4 py-3 mt-4 text-[#3b290c] opacity-60 hover:opacity-100 hover:bg-[#fff8ef] rounded-lg transition-all group justify-center xl:justify-start"
         >
