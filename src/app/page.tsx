@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Delete, LogIn } from 'lucide-react'
@@ -27,6 +27,13 @@ export default function LoginPage() {
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [shake, setShake] = useState(false)
+  const [isAutoLocked, setIsAutoLocked] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('tjap_locked') === '1') {
+      setIsAutoLocked(true)
+    }
+  }, [])
 
   const handleDigit = useCallback(
     (digit: string) => {
@@ -59,6 +66,10 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (res.ok && data.success) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('tjap_locked')
+          localStorage.setItem('tjap_last_active', Date.now().toString())
+        }
         router.push('/pos')
       } else {
         setShake(true)
@@ -128,7 +139,7 @@ export default function LoginPage() {
         {/* Card Header */}
         <div className="mb-6 md:mb-8 text-center">
           <h2 className="font-headline text-xl md:text-2xl text-tertiary mb-4 md:mb-6">
-            Staff Access Required
+            {isAutoLocked ? 'Sesi Terkunci (Inaktif)' : 'Staff Access Required'}
           </h2>
 
           {/* PIN Dots */}
@@ -147,6 +158,10 @@ export default function LoginPage() {
             {error ? (
               <p className="font-mono text-xs text-error animate-fade-in">
                 {error}
+              </p>
+            ) : isAutoLocked ? (
+              <p className="font-mono text-[10px] text-amber-600 font-semibold uppercase tracking-wider">
+                Layar mati / inaktif &gt;15 mnt. Masukkan PIN.
               </p>
             ) : (
               <p className="font-mono text-[10px] text-tertiary/50 uppercase tracking-tighter">
