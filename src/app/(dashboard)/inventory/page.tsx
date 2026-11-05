@@ -1,11 +1,30 @@
 'use client'
 
 import Image from "next/image"
-import { Edit, Trash2, Plus, Loader2 } from "lucide-react"
+import { Edit, Trash2, Plus, Loader2, Coffee, CupSoda, Cookie, UtensilsCrossed, Sparkles } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Product } from "@/types/database.types"
 import ProductModal from "@/components/inventory/ProductModal"
 import { useSearchStore } from "@/store/useSearchStore"
+
+const getCategoryIcon = (category?: string) => {
+  const cat = category?.toUpperCase().trim() || ''
+  switch (cat) {
+    case 'KHOPI':
+      return <Coffee className="w-5 h-5 text-tertiary/60 group-hover:scale-110 transition-transform duration-200" strokeWidth={1.75} />
+    case 'NON KHOPI':
+    case 'NON-KHOPI':
+      return <CupSoda className="w-5 h-5 text-tertiary/60 group-hover:scale-110 transition-transform duration-200" strokeWidth={1.75} />
+    case 'SNACK':
+      return <Cookie className="w-5 h-5 text-tertiary/60 group-hover:scale-110 transition-transform duration-200" strokeWidth={1.75} />
+    case 'MAKANAN':
+      return <UtensilsCrossed className="w-5 h-5 text-tertiary/60 group-hover:scale-110 transition-transform duration-200" strokeWidth={1.75} />
+    case 'TOPPING':
+      return <Sparkles className="w-5 h-5 text-tertiary/60 group-hover:scale-110 transition-transform duration-200" strokeWidth={1.75} />
+    default:
+      return <Coffee className="w-5 h-5 text-tertiary/60 group-hover:scale-110 transition-transform duration-200" strokeWidth={1.75} />
+  }
+}
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -134,8 +153,12 @@ export default function InventoryPage() {
                     <td className="px-4 lg:px-6 py-5 font-mono text-xs lg:text-sm text-on-surface-variant">{prod.sku}</td>
                     <td className="px-4 lg:px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded bg-surface-container-high flex-shrink-0 overflow-hidden border border-outline-variant/10 relative">
-                          <Image fill sizes="40px" className="object-cover" alt={prod.title} src={prod.image_url || '/placeholder.jpg'} />
+                        <div className="w-10 h-10 rounded-lg bg-surface-container flex-shrink-0 flex items-center justify-center border border-outline-variant/15 text-tertiary relative overflow-hidden group-hover:bg-surface-container-high transition-colors">
+                          {prod.image_url ? (
+                            <Image fill sizes="40px" className="object-cover" alt={prod.title} src={prod.image_url} />
+                          ) : (
+                            getCategoryIcon(prod.category)
+                          )}
                         </div>
                         <span className="font-body font-semibold text-tertiary text-sm lg:text-base">{prod.title}</span>
                       </div>
