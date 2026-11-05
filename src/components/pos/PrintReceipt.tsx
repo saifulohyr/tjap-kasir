@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 
 export interface ReceiptData {
   ticketNumber: string
-  items: Array<{ title: string; quantity: number; price: number }>
+  items: Array<{ title: string; quantity: number; price: number; note?: string | null }>
   total: number
   cashReceived: number
   changeDue: number
@@ -114,6 +114,11 @@ export default function PrintReceipt({ data }: PrintReceiptProps) {
         {data.items.map((item, idx) => (
           <div key={idx} style={{ marginBottom: '4px', wordBreak: 'break-word' }}>
             <div style={{ fontWeight: 'bold', fontSize: '10px' }}>{item.title}</div>
+            {item.note && (
+              <div style={{ fontSize: '8px', fontStyle: 'italic', color: '#444', paddingLeft: '4px' }}>
+                * Catatan: {item.note}
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', marginTop: '2px' }}>
               <span>{item.quantity}x @ {item.price.toLocaleString('id-ID')}</span>
               <span>{(item.quantity * item.price).toLocaleString('id-ID')}</span>

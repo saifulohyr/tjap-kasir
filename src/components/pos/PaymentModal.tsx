@@ -73,6 +73,31 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady, btHook }
   const cashReceived = parseInt(cashReceivedStr) || 0
   const changeDue = Math.max(0, cashReceived - total)
   
+  // Smart quick cash options (Uang Pas + rounded Indonesian Rupiah bills)
+  const getQuickCashOptions = (): number[] => {
+    if (total <= 0) return [10000, 20000, 50000, 100000]
+    const opts = new Set<number>()
+    opts.add(total) // Uang pas
+
+    const next10k = Math.ceil(total / 10000) * 10000
+    if (next10k > total) opts.add(next10k)
+
+    for (const bill of [20000, 50000, 100000]) {
+      if (bill > total) opts.add(bill)
+    }
+
+    if (total >= 100000) {
+      const next50k = Math.ceil(total / 50000) * 50000
+      if (next50k > total) opts.add(next50k)
+      const next100k = Math.ceil(total / 100000) * 100000
+      if (next100k > total) opts.add(next100k)
+    }
+
+    return Array.from(opts).sort((a, b) => a - b).slice(0, 4)
+  }
+
+  const quickCashList = getQuickCashOptions()
+  
   const handleCheckout = async () => {
     if (cashReceived < total) {
       alert("Uang yang diterima kurang!")
@@ -104,7 +129,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady, btHook }
       // Snapshot receipt data BEFORE clearing cart, and send to parent
       const receiptSnapshot: ReceiptData = {
         ticketNumber,
-        items: cart.map(i => ({ title: i.title, quantity: i.quantity, price: i.price })),
+        items: cart.map(i => ({ title: i.title, quantity: i.quantity, price: i.price, note: i.note })),
         total,
         cashReceived,
         changeDue,
@@ -142,7 +167,7 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady, btHook }
 
         const receiptSnapshot: ReceiptData = {
           ticketNumber: offlineTicket,
-          items: cart.map(i => ({ title: i.title, quantity: i.quantity, price: i.price })),
+          items: cart.map(i => ({ title: i.title, quantity: i.quantity, price: i.price, note: i.note })),
           total,
           cashReceived,
           changeDue,
@@ -293,6 +318,25 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady, btHook }
                       />
                     </div>
                   </div>
+
+                  {/* Quick Cash Buttons */}
+                  <div className={`flex flex-wrap gap-2 transition-opacity duration-300 ${paymentMethod === 'QRIS' ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
+                    {quickCashList.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setCashReceivedStr(opt.toString())}
+                        className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition-all shadow-sm ${
+                          cashReceived === opt
+                            ? 'bg-primary text-on-primary ring-2 ring-primary/40'
+                            : 'bg-surface-container-high text-on-surface hover:bg-surface-variant'
+                        }`}
+                      >
+                        {opt === total ? 'Uang Pas' : `Rp ${opt.toLocaleString('id-ID')}`}
+                      </button>
+                    ))}
+                  </div>
+
                   <div className={`grid grid-cols-3 gap-2 transition-opacity duration-300 ${paymentMethod === 'QRIS' ? 'opacity-20 pointer-events-none' : 'opacity-100'}`}>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, '00', 0].map((num) => (
                       <button 
@@ -312,13 +356,26 @@ export default function PaymentModal({ isOpen, onClose, onReceiptReady, btHook }
                 {/* Change Due & Action */}
                 <div className="flex flex-col h-full gap-4 md:gap-6">
                   <div className="bg-surface-container-low p-5 md:p-6 rounded-xl border border-outline-variant/10 flex-1 flex flex-col justify-center">
-                    <label className="font-mono text-[10px] md:text-xs uppercase text-on-surface-variant mb-2 md:mb-4 block font-bold tracking-wider">Kembalian (Change Due)</label>
+                    <label className="font-mono text-[10px] md:text-xs uppercase text-on-surface-variant mb-2 block font-bold tracking-wider">
+                      {cashReceived >= total ? 'Kembalian (Change Due)' : 'Kurang Bayar'}
+                    </label>
                     <div className="flex flex-col justify-center">
-                      <span className="font-mono text-3xl md:text-4xl text-primary font-bold">Rp {changeDue.toLocaleString('id-ID')}</span>
-                      <div className="mt-3 md:mt-4 flex gap-2">
-                        {cashReceived >= total && (
-                          <span className="px-2 py-1 bg-secondary-container text-on-secondary-container font-mono font-bold text-[10px] rounded uppercase tracking-wider">
-                            Sufficient Funds
+                      <span className={`font-mono text-3xl md:text-4xl font-bold ${
+                        cashReceived >= total ? 'text-primary' : 'text-error'
+                      }`}>
+                        {cashReceived >= total 
+                          ? `Rp ${changeDue.toLocaleString('id-ID')}`
+                          : `- Rp ${(total - cashReceived).toLocaleString('id-ID')}`
+                        }
+                      </span>
+                      <div className="mt-3 flex gap-2">
+                        {cashReceived >= total ? (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-800 font-mono font-bold text-[10px] rounded uppercase tracking-wider">
+                            Uang Cukup ✓
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-800 font-mono font-bold text-[10px] rounded uppercase tracking-wider">
+                            Kurang Pembayaran
                           </span>
                         )}
                       </div>

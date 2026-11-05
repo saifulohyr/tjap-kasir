@@ -1,7 +1,7 @@
 'use client'
 
-import { MoreVertical, CheckCircle2, Loader2, Clock, Printer, Square, SquareCheckBig } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { MoreVertical, CheckCircle2, Loader2, Clock, Printer, Square, SquareCheckBig, Volume2, VolumeX } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
 import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter'
 import { generateEscPosReceipt } from '@/utils/escpos'
 import PrintReceipt, { ReceiptData } from '@/components/pos/PrintReceipt'
@@ -29,12 +29,53 @@ type Order = {
   payment_method: string
 }
 
+// Web Audio API chime (Ding-Dong) without external asset dependencies
+function playKitchenChime() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextClass) return
+    const ctx = new AudioContextClass()
+    const now = ctx.currentTime
+
+    // First tone (E5: ~659Hz)
+    const osc1 = ctx.createOscillator()
+    const gain1 = ctx.createGain()
+    osc1.type = 'triangle'
+    osc1.frequency.setValueAtTime(659.25, now)
+    gain1.gain.setValueAtTime(0.25, now)
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
+    osc1.connect(gain1)
+    gain1.connect(ctx.destination)
+    osc1.start(now)
+    osc1.stop(now + 0.5)
+
+    // Second tone (G5: ~784Hz)
+    const osc2 = ctx.createOscillator()
+    const gain2 = ctx.createGain()
+    osc2.type = 'triangle'
+    osc2.frequency.setValueAtTime(783.99, now + 0.22)
+    gain2.gain.setValueAtTime(0.3, now + 0.22)
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.85)
+    osc2.connect(gain2)
+    gain2.connect(ctx.destination)
+    osc2.start(now + 0.22)
+    osc2.stop(now + 0.85)
+  } catch (err) {
+    console.warn('Audio chime notice:', err)
+  }
+}
+
 export default function KitchenDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [lastSync, setLastSync] = useState<string>('--:--:--')
   const [printTarget, setPrintTarget] = useState<ReceiptData | null>(null)
+  const [soundEnabled, setSoundEnabled] = useState(true)
   const btHook = useBluetoothPrinter()
+
+  // Track incoming order IDs to detect new orders
+  const prevIncomingIdsRef = useRef<Set<string>>(new Set())
+  const isInitialRef = useRef(true)
 
   // ── Per-item checklist (Zustand — persists across navigation) ──
   const { itemChecks, toggleItemCheck, clearOrderChecks, isItemChecked, getCheckedCount, allItemsDone } = useKitchenStore()
@@ -45,6 +86,19 @@ export default function KitchenDashboard() {
       const res = await fetch('/api/kitchen')
       const data = await res.json()
       if (Array.isArray(data)) {
+        const incomingOrders = (data as Order[]).filter(o => o.kitchen_status === 'pending')
+        const incomingIds = new Set(incomingOrders.map(o => o.id))
+
+        // Play chime if new pending order arrived
+        if (!isInitialRef.current && soundEnabled) {
+          const hasNew = incomingOrders.some(o => !prevIncomingIdsRef.current.has(o.id))
+          if (hasNew) {
+            playKitchenChime()
+          }
+        }
+
+        isInitialRef.current = false
+        prevIncomingIdsRef.current = incomingIds
         setOrders(data as unknown as Order[])
       }
     } catch (error) {
@@ -150,7 +204,35 @@ export default function KitchenDashboard() {
               Pesanan Masuk
               <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[10px] lg:text-xs font-mono">{incoming.length.toString().padStart(2, '0')}</span>
             </h3>
-            <MoreVertical className="w-5 h-5 text-outline cursor-pointer hover:text-primary transition-colors" />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !soundEnabled
+                  setSoundEnabled(next)
+                  if (next) playKitchenChime()
+                }}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-mono font-bold transition-all ${
+                  soundEnabled
+                    ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-xs'
+                    : 'bg-surface-container-high text-on-surface-variant/60'
+                }`}
+                title={soundEnabled ? 'Suara lonceng aktif (klik untuk mute)' : 'Suara lonceng mati (klik untuk aktifkan)'}
+              >
+                {soundEnabled ? (
+                  <>
+                    <Volume2 className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
+                    <span>Lonceng On</span>
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="w-3.5 h-3.5 text-outline" />
+                    <span>Mute</span>
+                  </>
+                )}
+              </button>
+              <MoreVertical className="w-5 h-5 text-outline cursor-pointer hover:text-primary transition-colors" />
+            </div>
           </div>
           
           <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 pb-4 custom-scrollbar">

@@ -73,6 +73,9 @@ export const generateEscPosReceipt = (data: ReceiptData, storeName: string, addr
   // Items
   data.items.forEach(item => {
     addLine(`${item.title}`)
+    if (item.note) {
+      addLine(`  * Note: ${item.note}`)
+    }
     const qtyPrice = `${item.quantity}x @ ${item.price.toLocaleString('id-ID')}`
     const totalItem = (item.quantity * item.price).toLocaleString('id-ID')
     
