@@ -163,7 +163,7 @@ export default function PrintReceipt({ data }: PrintReceiptProps) {
         <div style={{ borderTop: '1px dotted #000', borderBottom: '1px dotted #000', padding: '6px 0', margin: '6px 0', backgroundColor: '#f9f9f9' }}>
           <p style={{ fontWeight: 'bold', margin: '0 0 2px 0', fontSize: '9px', letterSpacing: '1px' }}>📶 FREE WIFI</p>
           <p style={{ margin: '2px 0', fontSize: '10px' }}>SSID: <span style={{ fontWeight: 'bold' }}>WIFIOJI</span></p>
-          <p style={{ margin: '2px 0', fontSize: '10px' }}>PASS: <span style={{ fontWeight: 'bold' }}>CACA1968</span></p>
+          <p style={{ margin: '2px 0', fontSize: '10px' }}>PASS: <span style={{ fontWeight: 'bold' }}>hilman123</span></p>
         </div>
         
         <div style={{ marginTop: '8px', fontSize: '10px', letterSpacing: '2px' }}>
