@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   Utensils,
@@ -35,8 +36,15 @@ export default function Sidebar() {
         {/* Brand */}
         <div className="px-3 xl:px-6 mb-8">
           <div className="flex items-center gap-3 justify-center xl:justify-start">
-            <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold font-mono text-sm shadow-sm shrink-0">
-              TC
+            <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs shrink-0 border border-slate-200 bg-white">
+              <Image
+                src="/logo.png"
+                alt="Tjap Chacoh"
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
+                priority
+              />
             </div>
             <div className="hidden xl:block min-w-0">
               <h1 className="font-bold text-base text-slate-900 tracking-tight leading-tight truncate">

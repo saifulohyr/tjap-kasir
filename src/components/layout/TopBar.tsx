@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import { Calendar, Clock, Search, Download, Loader2, Wifi, WifiOff, RefreshCw } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import ExcelJS from 'exceljs'
@@ -207,40 +208,76 @@ export default function TopBar() {
       {/* ── Left Section ── */}
       <div className="flex items-center gap-3 lg:gap-6 animate-fade-in min-w-0 flex-1">
         {isPos ? (
-          <div className="flex items-center gap-2 lg:gap-3 shrink-0">
-            <h1 className="font-bold text-lg lg:text-xl text-red-600 tracking-tight flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+          <div className="flex items-center gap-2.5 lg:gap-3 shrink-0">
+            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-200 shadow-2xs">
+              <Image
+                src="/logo.png"
+                alt="Tjap Chacoh"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+                priority
+              />
+            </div>
+            <h1 className="font-bold text-base lg:text-lg text-slate-900 tracking-tight">
               Tjap Chacoh
             </h1>
             <div className="h-4 w-[1px] bg-slate-200 hidden sm:block"></div>
-            <h2 className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold pl-1 lg:pl-0">Point of Sales</h2>
+            <h2 className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold hidden sm:block">Point of Sales</h2>
           </div>
         ) : isInventory ? (
           <>
-            <div className="shrink-0 flex items-center gap-2">
-              <h1 className="font-bold text-lg lg:text-xl text-red-600 tracking-tight flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+            <div className="shrink-0 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-200 shadow-2xs">
+                <Image
+                  src="/logo.png"
+                  alt="Tjap Chacoh"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                  priority
+                />
+              </div>
+              <h1 className="font-bold text-base lg:text-lg text-slate-900 tracking-tight">
                 Tjap Chacoh
               </h1>
               <div className="h-4 w-[1px] bg-slate-200 hidden sm:block"></div>
-              <span className="font-mono text-[11px] uppercase text-slate-500 tracking-wider font-semibold">Master Inventory</span>
+              <span className="font-mono text-[11px] uppercase text-slate-500 tracking-wider font-semibold hidden sm:inline">Master Inventory</span>
             </div>
           </>
         ) : isAnalytics ? (
           <>
-            <div className="flex items-center gap-2 lg:gap-3 shrink-0">
-              <h1 className="font-bold text-lg lg:text-xl text-red-600 tracking-tight flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+            <div className="flex items-center gap-2.5 lg:gap-3 shrink-0">
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-200 shadow-2xs">
+                <Image
+                  src="/logo.png"
+                  alt="Tjap Chacoh"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                  priority
+                />
+              </div>
+              <h1 className="font-bold text-base lg:text-lg text-slate-900 tracking-tight">
                 Tjap Chacoh
               </h1>
               <div className="h-4 w-[1px] bg-slate-200 hidden sm:block"></div>
-              <h2 className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold pl-1 lg:pl-0">Sales Analytics</h2>
+              <h2 className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold hidden sm:block">Sales Analytics</h2>
             </div>
           </>
         ) : (
           <>
-            <h1 className="font-bold text-lg lg:text-xl text-red-600 tracking-tight flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-200 shadow-2xs">
+              <Image
+                src="/logo.png"
+                alt="Tjap Chacoh"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+                priority
+              />
+            </div>
+            <h1 className="font-bold text-base lg:text-lg text-slate-900 tracking-tight">
               Tjap Chacoh
             </h1>
             <div className="h-4 w-[1px] bg-slate-200 hidden sm:block"></div>

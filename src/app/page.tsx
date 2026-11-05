@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Delete, LogIn } from 'lucide-react'
 import PinDot from '@/components/login/PinDot'
 import NumpadButton from '@/components/login/NumpadButton'
@@ -98,12 +99,22 @@ export default function LoginPage() {
       <div className="heritage-bar" />
 
       {/* ── Brand Header ── */}
-      <div className="mb-6 md:mb-10 text-center animate-fade-in scale-90 md:scale-100">
-        <h1 className="font-serif-display text-4xl md:text-6xl italic font-bold text-primary tracking-tight mb-2">
+      <div className="mb-6 md:mb-8 text-center animate-fade-in flex flex-col items-center">
+        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md border-2 border-slate-200 mb-3 bg-white">
+          <Image
+            src="/logo.png"
+            alt="Tjap Chacoh Logo"
+            width={96}
+            height={96}
+            className="w-full h-full object-cover"
+            priority
+          />
+        </div>
+        <h1 className="font-bold text-3xl md:text-5xl text-slate-900 tracking-tight mb-1">
           Tjap Chacoh
         </h1>
-        <p className="font-label text-[10px] md:text-sm uppercase tracking-[0.2em] text-tertiary/60">
-          Sejak Kemarin Sore
+        <p className="font-mono text-xs uppercase tracking-widest text-slate-500 font-semibold">
+          Point of Sale & Kitchen Management
         </p>
       </div>
 
